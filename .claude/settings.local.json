@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(nslookup fleeswap.bnptwye.mongodb.net)",
+      "Bash(ping -n 3 google.com)",
+      "Bash(nslookup fleeswap.bnptwye.mongodb.net 8.8.8.8)",
+      "Bash(ipconfig /flushdns)",
+      "Bash(sc query:*)"
+    ]
+  }
+}
