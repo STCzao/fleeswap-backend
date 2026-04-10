@@ -19,4 +19,10 @@ const findByIdConRefreshToken = (id) => User.findById(id).select("+refreshToken"
 // Crea y persiste un nuevo usuario con los datos recibidos.
 const create = (data) => User.create(data);
 
-module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, create };
+// Actualiza los campos de perfil de un usuario por id.
+// { new: true } retorna el documento actualizado en lugar del anterior.
+// runValidators aplica las validaciones del schema de Mongoose al actualizar.
+const updatePerfil = (id, data) =>
+  User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).lean({ virtuals: true });
+
+module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, create, updatePerfil };
