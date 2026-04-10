@@ -49,7 +49,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
       maxlength: [300, "La URL de la foto no puede superar los 300 caracteres"],
-      match: [/^https?:\/\/.+/, "La URL de la foto no es válida"],
+      match: [/^https:\/\/.+/, "La URL de la foto no es válida"],
     },
     bio: {
       type: String,
@@ -101,7 +101,7 @@ const userSchema = new mongoose.Schema(
       },
     },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
 // Virtual que indica si el perfil está completo.
