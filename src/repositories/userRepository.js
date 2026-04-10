@@ -25,4 +25,9 @@ const create = (data) => User.create(data);
 const updatePerfil = (id, data) =>
   User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).lean({ virtuals: true });
 
-module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, create, updatePerfil };
+// Retorna campos públicos de un usuario por id — excluye datos sensibles.
+// Reutilizable en el perfil público sin autenticación.
+const findPublicById = (id) =>
+  User.findById(id).select("nombre apellido photo bio location createdAt");
+
+module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, create, updatePerfil, findPublicById };

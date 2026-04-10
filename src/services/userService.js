@@ -47,4 +47,27 @@ const obtenerPerfil = async (userId) => {
   };
 };
 
-module.exports = { obtenerPerfil, actualizarPerfil };
+// Retorna el perfil público de un usuario por id.
+// Incluye datos de reputación con valores por defecto (0, []) hasta que
+// los modelos Exchange, Review y Publication estén disponibles en Sprint 2.
+const obtenerPerfilPublico = async (userId) => {
+  const user = await userRepository.findPublicById(userId);
+  if (!user) throw new AppError("Usuario no encontrado", 404);
+
+  return {
+    id: user._id,
+    nombre: user.nombre,
+    apellido: user.apellido,
+    photo: user.photo,
+    bio: user.bio,
+    location: user.location,
+    miembroDesde: user.createdAt,
+    // TODO Sprint 2: reemplazar con datos reales de Exchange y Review
+    calificacionPromedio: 0,
+    intercambiosCompletados: 0,
+    // TODO Sprint 2: reemplazar con publicaciones activas reales
+    publicaciones: [],
+  };
+};
+
+module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil };

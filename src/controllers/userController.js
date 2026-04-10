@@ -34,4 +34,14 @@ const editarPerfil = async (req, res, next) => {
   }
 };
 
-module.exports = { obtenerPerfil, actualizarPerfil, editarPerfil };
+// GET /api/users/:id — ruta pública, sin autenticación
+const obtenerPerfilPublico = async (req, res, next) => {
+  try {
+    const result = await userService.obtenerPerfilPublico(req.params.id);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil, editarPerfil };
