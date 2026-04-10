@@ -5,10 +5,18 @@ const User = require("../models/User");
 // Busca un usuario por email. Retorna el documento o null.
 const findByEmail = (email) => User.findOne({ email });
 
+// Igual que findByEmail pero incluye el campo password (excluido por select:false en el schema).
+// Solo usar en flujos de autenticación que necesitan comparar credenciales.
+const findByEmailConPassword = (email) => User.findOne({ email }).select("+password");
+
 // Busca un usuario por id. Retorna el documento o null.
 const findById = (id) => User.findById(id);
+
+// Igual que findById pero incluye refreshToken (excluido por select:false).
+// Solo usar en el flujo de renovación de tokens.
+const findByIdConRefreshToken = (id) => User.findById(id).select("+refreshToken");
 
 // Crea y persiste un nuevo usuario con los datos recibidos.
 const create = (data) => User.create(data);
 
-module.exports = { findByEmail, findById, create };
+module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, create };

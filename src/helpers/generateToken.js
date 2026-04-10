@@ -9,7 +9,7 @@ const generateAccessToken = (user) =>
     { expiresIn: process.env.JWT_EXPIRES_IN }
   );
 
-// Genera un refresh token JWT de larga duración (7d por defecto).
+// Genera un refresh token JWT de larga duración (controlado por JWT_REFRESH_EXPIRES_IN).
 // Se envía como httpOnly cookie — nunca accesible desde JavaScript.
 // Se almacena hasheado en la DB.
 const generateRefreshToken = (user) =>
