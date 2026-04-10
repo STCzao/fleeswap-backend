@@ -138,4 +138,20 @@ const refresh = async (refreshToken) => {
   return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 };
 
-module.exports = { register, login, refresh };
+// Invalida la sesión del usuario eliminando el refresh token de DB y limpiando la cookie.
+// Usa el refresh token de la cookie para identificar al usuario — funciona aunque el
+// accessToken haya expirado, evitando que el usuario quede "atrapado" sin poder cerrar sesión.
+const logout = async (refreshToken) => {
+  if (!refreshToken) return; // si no hay cookie, la sesión ya estaba cerrada
+
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+  } catch {
+    return; // token inválido o expirado — sesión ya no es válida, nada que limpiar
+  }
+
+  await userRepository.revocarRefreshToken(decoded.id);
+};
+
+module.exports = { register, login, refresh, logout };

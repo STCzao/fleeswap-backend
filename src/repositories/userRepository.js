@@ -30,4 +30,8 @@ const updatePerfil = (id, data) =>
 const findPublicById = (id) =>
   User.findById(id).select("nombre apellido photo bio location createdAt");
 
-module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, create, updatePerfil, findPublicById };
+// Revoca el refresh token de un usuario — usado en logout.
+const revocarRefreshToken = (id) =>
+  User.findByIdAndUpdate(id, { refreshToken: null, refreshTokenExpiry: null });
+
+module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, create, updatePerfil, findPublicById, revocarRefreshToken };
