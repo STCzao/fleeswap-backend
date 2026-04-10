@@ -37,7 +37,7 @@ const registerValidator = [
 
   body("password")
     .exists({ checkFalsy: true }).withMessage("La contraseña es requerida")
-    .isLength({ min: 6, max: 64 }).withMessage("La contraseña debe tener entre 6 y 64 caracteres")
+    .isLength({ min: 8, max: 64 }).withMessage("La contraseña debe tener entre 8 y 64 caracteres")
     // max 64 — bcrypt trunca entradas mayores a 72 bytes
     .matches(/[A-Z]/).withMessage("La contraseña debe tener al menos una mayúscula")
     .matches(/\d/).withMessage("La contraseña debe tener al menos un número")
@@ -52,4 +52,22 @@ const registerValidator = [
     }),
 ];
 
-module.exports = { registerValidator };
+// Reglas de validación para el login de usuario.
+// Mismas restricciones de formato que register — las contraseñas fueron creadas con estas reglas.
+// La verificación de credenciales (usuario existe, password correcta) se delega al service.
+const loginValidator = [
+  body("email")
+    .exists({ checkFalsy: true }).withMessage("El email es requerido")
+    .isEmail().withMessage("El email no tiene un formato válido")
+    .isLength({ min: 5, max: 100 }).withMessage("El email debe tener entre 5 y 100 caracteres")
+    .normalizeEmail(),
+
+  body("password")
+    .exists({ checkFalsy: true }).withMessage("La contraseña es requerida")
+    .isLength({ min: 8, max: 64 }).withMessage("La contraseña debe tener entre 8 y 64 caracteres")
+    .matches(/[A-Z]/).withMessage("La contraseña debe tener al menos una mayúscula")
+    .matches(/\d/).withMessage("La contraseña debe tener al menos un número")
+    .matches(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/).withMessage("La contraseña debe tener al menos un carácter especial"),
+];
+
+module.exports = { registerValidator, loginValidator };
