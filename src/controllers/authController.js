@@ -5,8 +5,16 @@ const authService = require("../services/authService");
 // Solo delega al service y propaga errores al errorHandler global via next(err).
 const register = async (req, res, next) => {
   try {
-    const result = await authService.register(req.body);
-    res.status(201).json(result);
+    const { accessToken, refreshToken, user } = await authService.register(req.body);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: Number(process.env.JWT_REFRESH_EXPIRES_IN_MS),
+    });
+
+    res.status(201).json({ accessToken, user });
   } catch (err) {
     next(err);
   }
