@@ -3,11 +3,12 @@ const logger = require("../helpers/logger");
 
 // Middleware global de manejo de errores.
 // Debe montarse al final de app.js, después de todas las rutas.
-// Maneja tres tipos de error:
+// Maneja cinco tipos de error:
 //   1. AppError — errores operacionales esperados (400, 409, etc.)
 //   2. ValidationError — errores de esquema de Mongoose
 //   3. MongoServerError 11000 — clave duplicada (race condition en emails únicos)
-//   4. Cualquier otro — error inesperado, se loguea con stack pero no se expone
+//   4. CastError — ObjectId inválido en parámetros de ruta
+//   5. Cualquier otro — error inesperado, se loguea con stack pero no se expone
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
   if (err instanceof AppError) {
@@ -24,6 +25,11 @@ const errorHandler = (err, req, res, next) => {
   if (err.name === "MongoServerError" && err.code === 11000) {
     logger.warn(`[${req.method}] ${req.path} — 409: duplicate key`);
     return res.status(409).json({ message: "El email ya está registrado" });
+  }
+
+  if (err.name === "CastError" && err.kind === "ObjectId") {
+    logger.warn(`[${req.method}] ${req.path} — 400: invalid ObjectId`);
+    return res.status(400).json({ message: "ID inválido" });
   }
 
   logger.error(`[${req.method}] ${req.path} — 500: ${err.message}`, { stack: err.stack });

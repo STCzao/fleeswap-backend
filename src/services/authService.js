@@ -42,9 +42,15 @@ const register = async ({ nombre, apellido, fechaNacimiento, email, password }) 
   // TODO: enviar email de verificación con Resend cuando se implemente la HU correspondiente
 
   const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+  const hashedRefresh = await bcrypt.hash(refreshToken, 10);
+  const refreshTokenExpiry = new Date(Date.now() + Number(process.env.JWT_REFRESH_EXPIRES_IN_MS));
+
+  await userRepository.actualizarRefreshToken(user._id, hashedRefresh, refreshTokenExpiry);
 
   return {
     accessToken,
+    refreshToken,
     user: {
       id: user._id,
       nombre: user.nombre,
@@ -77,11 +83,9 @@ const login = async ({ email, password }) => {
 
   // El refresh token se almacena hasheado para que un leak de DB no permita reutilizarlos
   const hashedRefresh = await bcrypt.hash(refreshToken, 10);
-  const refreshTokenExpiry = new Date(Date.now() + Number(process.env.JWT_REFRESH_EXPIRES_IN_MS)); // 7 días
+  const refreshTokenExpiry = new Date(Date.now() + Number(process.env.JWT_REFRESH_EXPIRES_IN_MS));
 
-  user.refreshToken = hashedRefresh;
-  user.refreshTokenExpiry = refreshTokenExpiry;
-  await user.save();
+  await userRepository.actualizarRefreshToken(user._id, hashedRefresh, refreshTokenExpiry);
 
   return {
     accessToken,
@@ -131,11 +135,25 @@ const refresh = async (refreshToken) => {
   const hashedRefresh = await bcrypt.hash(newRefreshToken, 10);
   const refreshTokenExpiry = new Date(Date.now() + Number(process.env.JWT_REFRESH_EXPIRES_IN_MS));
 
-  user.refreshToken = hashedRefresh;
-  user.refreshTokenExpiry = refreshTokenExpiry;
-  await user.save();
+  await userRepository.actualizarRefreshToken(user._id, hashedRefresh, refreshTokenExpiry);
 
   return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 };
 
-module.exports = { register, login, refresh };
+// Invalida la sesión del usuario eliminando el refresh token de DB y limpiando la cookie.
+// Usa el refresh token de la cookie para identificar al usuario — funciona aunque el
+// accessToken haya expirado, evitando que el usuario quede "atrapado" sin poder cerrar sesión.
+const logout = async (refreshToken) => {
+  if (!refreshToken) return; // si no hay cookie, la sesión ya estaba cerrada
+
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+  } catch {
+    return; // token inválido o expirado — sesión ya no es válida, nada que limpiar
+  }
+
+  await userRepository.revocarRefreshToken(decoded.id);
+};
+
+module.exports = { register, login, refresh, logout };

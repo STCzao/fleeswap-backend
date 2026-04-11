@@ -25,11 +25,12 @@ const actualizarPerfil = async (userId, { photo, bio, location }) => {
     photo: user.photo,
     bio: user.bio,
     location: user.location,
+    isVerified: user.isVerified,
     profileComplete: user.profileComplete,
   };
 };
 
-// Retorna el perfil público del usuario autenticado.
+// Retorna el perfil propio del usuario autenticado — incluye datos privados como email e isVerified.
 const obtenerPerfil = async (userId) => {
   const user = await userRepository.findById(userId);
   if (!user) throw new AppError("Usuario no encontrado", 404);

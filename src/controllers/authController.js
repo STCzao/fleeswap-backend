@@ -5,8 +5,16 @@ const authService = require("../services/authService");
 // Solo delega al service y propaga errores al errorHandler global via next(err).
 const register = async (req, res, next) => {
   try {
-    const result = await authService.register(req.body);
-    res.status(201).json(result);
+    const { accessToken, refreshToken, user } = await authService.register(req.body);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: Number(process.env.JWT_REFRESH_EXPIRES_IN_MS),
+    });
+
+    res.status(201).json({ accessToken, user });
   } catch (err) {
     next(err);
   }
@@ -54,4 +62,23 @@ const refresh = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, refresh };
+// POST /api/auth/logout
+// Limpia el refresh token en DB y elimina la cookie httpOnly del browser.
+// Responde 200 siempre — si la sesión ya estaba cerrada no es un error.
+const logout = async (req, res, next) => {
+  try {
+    await authService.logout(req.cookies.refreshToken);
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    res.status(200).json({ message: "Sesión cerrada correctamente" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { register, login, refresh, logout };
