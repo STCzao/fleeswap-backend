@@ -38,4 +38,41 @@ const actualizarRefreshToken = (id, refreshToken, refreshTokenExpiry) =>
 const revocarRefreshToken = (id) =>
   User.findByIdAndUpdate(id, { refreshToken: null, refreshTokenExpiry: null });
 
-module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, create, updatePerfil, findPublicById, actualizarRefreshToken, revocarRefreshToken };
+// Busca un usuario por id incluyendo el campo password — usado en cambio de contraseña.
+const findByIdConPassword = (id) => User.findById(id).select("+password");
+
+// Actualiza el hash de la contraseña de un usuario — usado en cambio y reset de contraseña.
+const actualizarPassword = (id, password) =>
+  User.findByIdAndUpdate(id, { password });
+
+// Guarda el hash SHA-256 del reset token y su expiración — usado en forgot-password.
+// El token plano solo se envía por email, en DB se guarda el hash.
+const actualizarResetToken = (id, resetToken, resetTokenExpiry) =>
+  User.findByIdAndUpdate(id, { resetToken, resetTokenExpiry });
+
+// Busca un usuario por el hash del reset token y verifica que no haya expirado.
+// Incluye +resetToken para poder validar la coincidencia.
+const findByResetToken = (resetTokenHash) =>
+  User.findOne({ resetToken: resetTokenHash, resetTokenExpiry: { $gt: new Date() } }).select("+resetToken");
+
+// Limpia el reset token después de un reset exitoso — invalida el link.
+const limpiarResetToken = (id) =>
+  User.findByIdAndUpdate(id, { resetToken: null, resetTokenExpiry: null });
+
+// Marca un usuario como eliminado (soft-delete) — no borra el documento.
+// El query middleware filtrará este usuario de todas las queries normales.
+const softDelete = (id) =>
+  User.findByIdAndUpdate(id, { isActive: false, deletedAt: new Date(), refreshToken: null, refreshTokenExpiry: null });
+
+// Reactiva una cuenta eliminada dentro del período de gracia (30 días).
+// Usa findOneAndUpdate con isActive en el filtro para bypassear el query middleware
+// que normalmente excluye usuarios inactivos.
+const reactivarCuenta = (id) =>
+  User.findOneAndUpdate({ _id: id, isActive: { $exists: true } }, { isActive: true, deletedAt: null });
+
+// Busca por email incluyendo usuarios inactivos — bypasea el query middleware.
+// Usado en register (para respetar la gracia de 30 días) y login (para reactivación).
+const findByEmailIncluyendoInactivos = (email) =>
+  User.findOne({ email, isActive: { $exists: true } }).select("+password");
+
+module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, findByIdConPassword, create, updatePerfil, findPublicById, actualizarRefreshToken, revocarRefreshToken, actualizarPassword, actualizarResetToken, findByResetToken, limpiarResetToken, softDelete, reactivarCuenta, findByEmailIncluyendoInactivos };

@@ -33,4 +33,23 @@ const obtenerPerfilPublico = async (req, res, next) => {
   }
 };
 
-module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil };
+// DELETE /api/users/me
+// Soft-delete — marca la cuenta como inactiva y revoca la sesión.
+// Limpia la cookie httpOnly para que el browser no envíe un refresh token ya inválido.
+const eliminarCuenta = async (req, res, next) => {
+  try {
+    await userService.eliminarCuenta(req.user._id, req.body.password);
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    res.status(200).json({ message: "Cuenta eliminada correctamente. Tenés 30 días para recuperarla iniciando sesión." });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil, eliminarCuenta };

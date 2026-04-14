@@ -1,4 +1,5 @@
 const userRepository = require("../repositories/userRepository");
+const bcrypt = require("bcrypt");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
 const AppError = require("../helpers/AppError");
 
@@ -71,4 +72,19 @@ const obtenerPerfilPublico = async (userId) => {
   };
 };
 
-module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil };
+// Elimina la cuenta del usuario (soft-delete).
+// Requiere la contraseña como verificación de identidad — previene eliminaciones accidentales
+// o por un atacante que tenga un access token robado pero no la contraseña.
+// La cuenta queda inactiva 30 días — durante ese período el login la reactiva.
+// Después de 30 días, el email se libera para re-registro.
+const eliminarCuenta = async (userId, password) => {
+  const user = await userRepository.findByIdConPassword(userId);
+  if (!user) throw new AppError("Usuario no encontrado", 404);
+
+  const passwordValida = await bcrypt.compare(password, user.password);
+  if (!passwordValida) throw new AppError("La contraseña es incorrecta", 401);
+
+  await userRepository.softDelete(userId);
+};
+
+module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil, eliminarCuenta };

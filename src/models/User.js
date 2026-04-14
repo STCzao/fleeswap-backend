@@ -100,9 +100,32 @@ const userSchema = new mongoose.Schema(
         message: "La fecha de expiración del token debe ser futura",
       },
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true, // indexado para filtrar eficientemente en todas las queries
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
+
+// Query middleware — filtra usuarios eliminados automáticamente en todas las queries.
+// Las funciones que necesitan incluir usuarios inactivos (login, register) deben
+// agregar explícitamente { isActive: { $exists: true } } o usar el Model directamente.
+const filtrarInactivos = function () {
+  if (!this.getFilter().hasOwnProperty("isActive")) {
+    this.where({ isActive: { $ne: false } });
+  }
+};
+
+userSchema.pre("find", filtrarInactivos);
+userSchema.pre("findOne", filtrarInactivos);
+userSchema.pre("findOneAndUpdate", filtrarInactivos);
+userSchema.pre("countDocuments", filtrarInactivos);
 
 // Virtual que indica si el perfil está completo.
 // Se considera completo cuando el usuario tiene bio, location y photo cargados.

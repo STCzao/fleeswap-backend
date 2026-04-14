@@ -28,4 +28,10 @@ const actualizarPerfilValidator = [
     .isLength({ min: 2, max: 100 }).withMessage("La ubicación debe tener entre 2 y 100 caracteres"),
 ];
 
-module.exports = { actualizarPerfilValidator };
+// Validación para eliminar cuenta — requiere la contraseña como confirmación de identidad.
+const eliminarCuentaValidator = [
+  body("password")
+    .exists({ checkFalsy: true }).withMessage("La contraseña es requerida para confirmar la eliminación"),
+];
+
+module.exports = { actualizarPerfilValidator, eliminarCuentaValidator };
