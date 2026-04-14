@@ -70,4 +70,64 @@ const loginValidator = [
     .matches(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/).withMessage("La contraseña debe tener al menos un carácter especial"),
 ];
 
-module.exports = { registerValidator, loginValidator };
+// Reglas de validación para el cambio de contraseña.
+// passwordActual se valida solo por presencia — la verificación real la hace el service contra bcrypt.
+// passwordNueva tiene las mismas reglas de fortaleza que el registro.
+const changePasswordValidator = [
+  body("passwordActual")
+    .exists({ checkFalsy: true }).withMessage("La contraseña actual es requerida"),
+
+  body("passwordNueva")
+    .exists({ checkFalsy: true }).withMessage("La nueva contraseña es requerida")
+    .isLength({ min: 8, max: 64 }).withMessage("La nueva contraseña debe tener entre 8 y 64 caracteres")
+    .matches(/[A-Z]/).withMessage("La nueva contraseña debe tener al menos una mayúscula")
+    .matches(/\d/).withMessage("La nueva contraseña debe tener al menos un número")
+    .matches(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/).withMessage("La nueva contraseña debe tener al menos un carácter especial")
+    // No permitir que la nueva contraseña sea igual a la actual
+    .custom((value, { req }) => {
+      if (value === req.body.passwordActual) throw new Error("La nueva contraseña debe ser diferente a la actual");
+      return true;
+    }),
+
+  body("confirmPassword")
+    .exists({ checkFalsy: true }).withMessage("La confirmación de contraseña es requerida")
+    .custom((value, { req }) => {
+      if (value !== req.body.passwordNueva) throw new Error("Las contraseñas no coinciden");
+      return true;
+    }),
+];
+
+// Validación para solicitar recuperación de contraseña.
+// Solo se valida formato de email — no se revela si existe o no en DB.
+const forgotPasswordValidator = [
+  body("email")
+    .exists({ checkFalsy: true }).withMessage("El email es requerido")
+    .isEmail().withMessage("El email no tiene un formato válido")
+    .isLength({ min: 5, max: 100 }).withMessage("El email debe tener entre 5 y 100 caracteres")
+    .normalizeEmail(),
+];
+
+// Validación para resetear la contraseña con token.
+// El token viene del link enviado por email — se valida como hex string de 64 chars (32 bytes).
+const resetPasswordValidator = [
+  body("token")
+    .exists({ checkFalsy: true }).withMessage("El token es requerido")
+    .isHexadecimal().withMessage("Token inválido")
+    .isLength({ min: 64, max: 64 }).withMessage("Token inválido"),
+
+  body("password")
+    .exists({ checkFalsy: true }).withMessage("La contraseña es requerida")
+    .isLength({ min: 8, max: 64 }).withMessage("La contraseña debe tener entre 8 y 64 caracteres")
+    .matches(/[A-Z]/).withMessage("La contraseña debe tener al menos una mayúscula")
+    .matches(/\d/).withMessage("La contraseña debe tener al menos un número")
+    .matches(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/).withMessage("La contraseña debe tener al menos un carácter especial"),
+
+  body("confirmPassword")
+    .exists({ checkFalsy: true }).withMessage("La confirmación de contraseña es requerida")
+    .custom((value, { req }) => {
+      if (value !== req.body.password) throw new Error("Las contraseñas no coinciden");
+      return true;
+    }),
+];
+
+module.exports = { registerValidator, loginValidator, changePasswordValidator, forgotPasswordValidator, resetPasswordValidator };
