@@ -32,7 +32,7 @@ const publicationSchema = new mongoose.Schema(
       type: String,
       required: [true, "El estado del objeto es requerido"],
       enum: {
-        values: ["como_nuevo", "bueno", "regular", "deteriorado"],
+        values: ["nuevo", "como_nuevo", "bueno", "regular", "deteriorado"],
         message: "Estado del objeto inválido",
       },
     },

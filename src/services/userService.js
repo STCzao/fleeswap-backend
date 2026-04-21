@@ -1,4 +1,5 @@
 const userRepository = require("../repositories/userRepository");
+const publicationRepository = require("../repositories/publicationRepository");
 const bcrypt = require("bcrypt");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
 const AppError = require("../helpers/AppError");
@@ -87,4 +88,8 @@ const eliminarCuenta = async (userId, password) => {
   await userRepository.softDelete(userId);
 };
 
-module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil, eliminarCuenta };
+// Devuelve todas las publicaciones del usuario autenticado — available y unavailable.
+// A diferencia del listado público, el owner necesita ver sus publicaciones pausadas para gestionarlas.
+const obtenerMisPublicaciones = (userId) => publicationRepository.findByOwner(userId);
+
+module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil, eliminarCuenta, obtenerMisPublicaciones };

@@ -38,6 +38,7 @@ app.use(express.json({ limit: "10kb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/publications", publicationRoutes);
+//app.use("/api/admin", adminRoutes);
 // app.use("/api/exchanges", exchangeRoutes);
 // app.use("/api/wishlist", wishlistRoutes);
 // app.use("/api/notifications", notificationRoutes);

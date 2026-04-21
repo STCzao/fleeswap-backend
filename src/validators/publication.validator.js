@@ -1,7 +1,7 @@
 const { body } = require("express-validator");
 
 const CATEGORIAS = ["electronica", "ropa_accesorios", "coleccionables", "libros_comics", "deportes", "hogar_deco", "juguetes", "arte", "musica", "otros"];
-const CONDICIONES = ["como_nuevo", "bueno", "regular", "deteriorado"];
+const CONDICIONES = ["nuevo", "como_nuevo", "bueno", "regular", "deteriorado"];
 const TIPOS = ["trueque", "venta", "ambos"];
 const MOTIVOS = ["falso", "enganoso", "inapropiado", "otro"];
 
@@ -24,7 +24,8 @@ const editarValidator = [
   body("condition").optional().isIn(CONDICIONES).withMessage("Estado del objeto inválido"),
   body("type").optional().isIn(TIPOS).withMessage("Tipo de publicación inválido"),
   body("photos").optional().isArray({ min: 1, max: 5 }).withMessage("Debe incluir entre 1 y 5 fotos"),
-  body("photos.*").optional().isURL().withMessage("Cada foto debe ser una URL válida"),
+  // Sin .optional() — si photos está presente, cada elemento debe ser URL válida sin excepción.
+  body("photos.*").isURL().withMessage("Cada foto debe ser una URL válida"),
 ];
 
 const cambiarEstadoValidator = [

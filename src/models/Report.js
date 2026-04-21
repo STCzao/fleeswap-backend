@@ -20,6 +20,11 @@ const reportSchema = new mongoose.Schema(
         message: "Motivo de reporte inválido",
       },
     },
+    status: {
+      type: String,
+      enum: ["pending", "reviewed", "dismissed"],
+      default: "pending",
+    },
   },
   { timestamps: true }
 );
