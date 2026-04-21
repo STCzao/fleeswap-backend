@@ -46,10 +46,10 @@ const cambiarEstado = async (req, res, next) => {
 };
 
 // GET /api/publications/:id
-// Ruta pública — cualquier visitante puede ver el detalle sin autenticarse.
+// req.user puede ser null si el visitante no está autenticado — el service maneja ambos casos.
 const verDetalle = async (req, res, next) => {
   try {
-    const publication = await publicationService.verDetalle(req.params.id);
+    const publication = await publicationService.verDetalle(req.params.id, req.user?._id);
     res.status(200).json(publication);
   } catch (err) {
     next(err);

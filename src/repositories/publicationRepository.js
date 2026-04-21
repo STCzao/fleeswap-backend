@@ -10,36 +10,20 @@ const findById = (id) =>
 const findByIdAndOwner = (id, ownerId) =>
   Publication.findOne({ _id: id, owner: ownerId });
 
-// Promise.all ejecuta la query y el count en paralelo — evita dos roundtrips secuenciales a MongoDB.
-const findAll = ({ page = 1, limit = 12, category, type, condition, search } = {}) => {
-  const query = { status: "available" };
+// history y description excluidos del select — son campos pesados que solo se sirven en verDetalle.
+// status excluido — siempre es 'available' en el listado público, no aporta información variable.
+const findAll = (query, { skip, limit }) =>
+  Publication.find(query)
+    .select("title photos type category condition owner createdAt")
+    .populate("owner", "nombre apellido location")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
-  if (category) query.category = category;
-  if (condition) query.condition = condition;
+// Función atómica separada de findAll — el service orquesta ambas en paralelo con Promise.all.
+const countAll = (query) => Publication.countDocuments(query);
 
-  // Una publicación 'ambos' debe aparecer al filtrar por 'trueque' o por 'venta'.
-  if (type) query.type = type === "ambos" ? "ambos" : { $in: [type, "ambos"] };
-
-  if (search) {
-    query.$or = [
-      { title: { $regex: search, $options: "i" } },
-      { description: { $regex: search, $options: "i" } },
-    ];
-  }
-
-  const skip = (page - 1) * limit;
-
-  return Promise.all([
-    Publication.find(query)
-      .select("title photos type category condition status owner createdAt")
-      .populate("owner", "nombre apellido location")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit),
-    Publication.countDocuments(query),
-  ]);
-};
-
+// Incluye publicaciones unavailable — el owner las necesita para poder reactivarlas desde su panel.
 const findByOwner = (ownerId) =>
   Publication.find({ owner: ownerId }).select("title photos type status createdAt").sort({ createdAt: -1 });
 
@@ -48,4 +32,4 @@ const updateById = (id, data) =>
 
 const deleteById = (id) => Publication.findByIdAndDelete(id);
 
-module.exports = { create, findById, findByIdAndOwner, findAll, findByOwner, updateById, deleteById };
+module.exports = { create, findById, findByIdAndOwner, findAll, countAll, findByOwner, updateById, deleteById };

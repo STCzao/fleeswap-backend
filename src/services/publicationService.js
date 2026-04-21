@@ -1,5 +1,6 @@
 const publicationRepository = require("../repositories/publicationRepository");
 const reportRepository = require("../repositories/reportRepository");
+const buildPublicationQuery = require("../helpers/buildPublicationQuery");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
 const AppError = require("../helpers/AppError");
 
@@ -56,9 +57,17 @@ const cambiarEstado = async (publicationId, ownerId, status) => {
   return publicationRepository.updateById(publicationId, { status });
 };
 
-const verDetalle = async (publicationId) => {
+// requesterId es opcional — viene del optionalAuthenticate middleware.
+// Una publicación unavailable solo es visible para su owner; para el resto es 404.
+const verDetalle = async (publicationId, requesterId = null) => {
   const publication = await publicationRepository.findById(publicationId);
   if (!publication) throw new AppError("Publicación no encontrada", 404);
+
+  if (publication.status === "unavailable") {
+    const isOwner = requesterId && publication.owner._id.toString() === requesterId.toString();
+    if (!isOwner) throw new AppError("Publicación no encontrada", 404);
+  }
+
   return publication;
 };
 
@@ -66,15 +75,20 @@ const verDetalle = async (publicationId) => {
 const listar = async (filtros) => {
   const page = Math.max(1, parseInt(filtros.page) || 1);
   const limit = Math.min(50, Math.max(1, parseInt(filtros.limit) || 12));
+  const skip = (page - 1) * limit;
 
-  const [publications, total] = await publicationRepository.findAll({
-    page,
-    limit,
+  const query = buildPublicationQuery({
     category: filtros.category,
     type: filtros.type,
     condition: filtros.condition,
     search: filtros.search,
   });
+
+  // Promise.all orquesta ambas queries en paralelo — el repository expone operaciones atómicas.
+  const [publications, total] = await Promise.all([
+    publicationRepository.findAll(query, { skip, limit }),
+    publicationRepository.countAll(query),
+  ]);
 
   return {
     publications,
