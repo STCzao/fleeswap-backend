@@ -76,8 +76,9 @@ const register = async ({ nombre, apellido, fechaNacimiento, email, password }) 
       id: user._id,
       nombre: user.nombre,
       apellido: user.apellido,
-      photo: user.photo,
-      profileComplete: user.profileComplete,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
     },
   };
 };
@@ -132,8 +133,9 @@ const login = async ({ email, password }) => {
       id: user._id,
       nombre: user.nombre,
       apellido: user.apellido,
-      photo: user.photo,
-      profileComplete: user.profileComplete,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
     },
   };
 };

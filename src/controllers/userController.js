@@ -1,16 +1,5 @@
 const userService = require("../services/userService");
 
-// GET /api/users/me/publications
-// Incluye publicaciones unavailable — el owner las necesita para poder reactivarlas (H2.4).
-const obtenerMisPublicaciones = async (req, res, next) => {
-  try {
-    const publications = await userService.obtenerMisPublicaciones(req.user._id);
-    res.status(200).json(publications);
-  } catch (err) {
-    next(err);
-  }
-};
-
 // PATCH /api/users/me/profile  — onboarding (campos opcionales, mínimo uno)
 // PUT   /api/users/me          — edición completa post-onboarding
 // req.user es inyectado por el middleware authenticate.
@@ -63,4 +52,4 @@ const eliminarCuenta = async (req, res, next) => {
   }
 };
 
-module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil, eliminarCuenta, obtenerMisPublicaciones };
+module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil, eliminarCuenta };

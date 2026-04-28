@@ -6,7 +6,6 @@ const cookieParser = require("cookie-parser");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
-const publicationRoutes = require("./routes/publicationRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
@@ -37,8 +36,7 @@ app.use(express.json({ limit: "10kb" }));
 // Rutas
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/publications", publicationRoutes);
-//app.use("/api/admin", adminRoutes);
+// app.use("/api/publications", publicationRoutes);
 // app.use("/api/exchanges", exchangeRoutes);
 // app.use("/api/wishlist", wishlistRoutes);
 // app.use("/api/notifications", notificationRoutes);
