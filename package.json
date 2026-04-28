@@ -1,0 +1,45 @@
+{
+  "name": "fleeswap-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "mocha test/**/*.test.js --timeout 10000 --require dotenv/config"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/STCzao/fleeswap-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/STCzao/fleeswap-backend/issues"
+  },
+  "homepage": "https://github.com/STCzao/fleeswap-backend#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.9.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.4.1",
+    "resend": "^6.11.0",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "chai": "^6.2.2",
+    "mocha": "^11.3.0",
+    "nodemon": "^3.1.14",
+    "serialize-javascript": "^7.0.5",
+    "supertest": "^7.2.2"
+  }
+}
