@@ -24,7 +24,18 @@ const publicationSchema = new mongoose.Schema(
       type: String,
       required: [true, "La categoría es requerida"],
       enum: {
-        values: ["electronica", "ropa_accesorios", "coleccionables", "libros_comics", "deportes", "hogar_deco", "juguetes", "arte", "musica", "otros"],
+        values: [
+          "electronica",
+          "ropa_accesorios",
+          "coleccionables",
+          "libros_comics",
+          "deportes",
+          "hogar_deco",
+          "juguetes",
+          "arte",
+          "musica",
+          "otros",
+        ],
         message: "Categoría inválida",
       },
     },
@@ -47,8 +58,14 @@ const publicationSchema = new mongoose.Schema(
     photos: {
       type: [String],
       validate: [
-        { validator: (arr) => arr.length >= 1, message: "Debe incluir al menos 1 foto" },
-        { validator: (arr) => arr.length <= 5, message: "No puede incluir más de 5 fotos" },
+        {
+          validator: (arr) => arr.length >= 1,
+          message: "Debe incluir al menos 1 foto",
+        },
+        {
+          validator: (arr) => arr.length <= 5,
+          message: "No puede incluir más de 5 fotos",
+        },
       ],
     },
     status: {
@@ -61,8 +78,12 @@ const publicationSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    intercambioActivo: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Índice de texto para que $regex en búsqueda por palabras clave use el índice en lugar de hacer collection scan.

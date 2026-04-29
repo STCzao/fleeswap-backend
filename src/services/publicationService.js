@@ -4,7 +4,10 @@ const buildPublicationQuery = require("../helpers/buildPublicationQuery");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
 const AppError = require("../helpers/AppError");
 
-const crear = async (ownerId, { title, description, history, category, condition, type, photos }) => {
+const crear = async (
+  ownerId,
+  { title, description, history, category, condition, type, photos },
+) => {
   const publication = await publicationRepository.create({
     title: sanitizarTexto(title),
     description: sanitizarTexto(description),
@@ -19,11 +22,10 @@ const crear = async (ownerId, { title, description, history, category, condition
   return publication;
 };
 
-// findByIdAndOwner resuelve ownership y existencia en una sola query — evita
-// el patrón findById + comparación manual que es vulnerable a TOCTOU.
 const editar = async (publicationId, ownerId, fields) => {
-  const publication = await publicationRepository.findByIdAndOwner(publicationId, ownerId);
-  if (!publication) throw new AppError("Publicación no encontrada o no autorizado", 404);
+  const publication = await publicationRepository.findById(publicationId);
+  if (!publication) throw new AppError("Publicación no encontrada", 404);
+  if (publication.owner._id.toString() !== ownerId.toString()) throw new AppError("No autorizado", 403);
 
   const data = {};
   if (fields.title !== undefined) data.title = sanitizarTexto(fields.title);
@@ -40,19 +42,18 @@ const editar = async (publicationId, ownerId, fields) => {
 };
 
 const eliminar = async (publicationId, ownerId) => {
-  const publication = await publicationRepository.findByIdAndOwner(publicationId, ownerId);
-  if (!publication) throw new AppError("Publicación no encontrada o no autorizado", 404);
-
-  // La verificación de Exchange activo se difiere a Sprint 3-4 cuando el modelo exista.
-  // H2.3 exige bloquear el delete si hay intercambio en curso — ver Exchange.status pending/active.
-  // if (await exchangeRepository.hasActive(publicationId)) throw new AppError(...)
+  const publication = await publicationRepository.findById(publicationId);
+  if (!publication) throw new AppError("Publicación no encontrada", 404);
+  if (publication.owner._id.toString() !== ownerId.toString()) throw new AppError("No autorizado", 403);
+  if (publication.intercambioActivo) throw new AppError("No se puede eliminar una publicación con un intercambio en curso", 409);
 
   await publicationRepository.deleteById(publicationId);
 };
 
 const cambiarEstado = async (publicationId, ownerId, status) => {
-  const publication = await publicationRepository.findByIdAndOwner(publicationId, ownerId);
-  if (!publication) throw new AppError("Publicación no encontrada o no autorizado", 404);
+  const publication = await publicationRepository.findById(publicationId);
+  if (!publication) throw new AppError("Publicación no encontrada", 404);
+  if (publication.owner._id.toString() !== ownerId.toString()) throw new AppError("No autorizado", 403);
 
   return publicationRepository.updateById(publicationId, { status });
 };
@@ -64,7 +65,9 @@ const verDetalle = async (publicationId, requesterId = null) => {
   if (!publication) throw new AppError("Publicación no encontrada", 404);
 
   if (publication.status === "unavailable") {
-    const isOwner = requesterId && publication.owner._id.toString() === requesterId.toString();
+    const isOwner =
+      requesterId &&
+      publication.owner._id.toString() === requesterId.toString();
     if (!isOwner) throw new AppError("Publicación no encontrada", 404);
   }
 
@@ -110,10 +113,21 @@ const reportar = async (publicationId, reporterId, reason) => {
     throw new AppError("No podés reportar tu propia publicación", 400);
   }
 
-  const existente = await reportRepository.findByPublicationAndReporter(publicationId, reporterId);
+  const existente = await reportRepository.findByPublicationAndReporter(
+    publicationId,
+    reporterId,
+  );
   if (existente) throw new AppError("Ya reportaste esta publicación", 409);
 
   await reportRepository.create({ publicationId, reporterId, reason });
 };
 
-module.exports = { crear, editar, eliminar, cambiarEstado, verDetalle, listar, reportar };
+module.exports = {
+  crear,
+  editar,
+  eliminar,
+  cambiarEstado,
+  verDetalle,
+  listar,
+  reportar,
+};
