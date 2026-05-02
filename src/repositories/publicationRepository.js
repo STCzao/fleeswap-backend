@@ -2,12 +2,12 @@ const Publication = require("../models/Publication");
 
 const create = (data) => Publication.create(data);
 
-// Populate limitado a campos públicos del dueño — nunca se expone email, password ni role.
+// Populate limitado a campos públicos del dueño; nunca se expone email, password ni role.
 const findById = (id) =>
   Publication.findById(id).populate("owner", "nombre apellido photo location");
 
-// history y description excluidos del select — son campos pesados que solo se sirven en verDetalle.
-// status excluido — siempre es 'available' en el listado público, no aporta información variable.
+// history y description excluidos del select; son campos pesados que solo se sirven en verDetalle.
+// status excluido; siempre es 'available' en el listado público, no aporta información variable.
 const findAll = (query, { skip, limit }) =>
   Publication.find(query)
     .select("title photos type category condition owner createdAt")
@@ -16,10 +16,10 @@ const findAll = (query, { skip, limit }) =>
     .skip(skip)
     .limit(limit);
 
-// Función atómica separada de findAll — el service orquesta ambas en paralelo con Promise.all.
+// Función atómica separada de findAll; el service orquesta ambas en paralelo con Promise.all.
 const countAll = (query) => Publication.countDocuments(query);
 
-// Incluye publicaciones unavailable — el owner las necesita para poder reactivarlas desde su panel.
+// Incluye publicaciones unavailable; el owner las necesita para poder reactivarlas desde su panel.
 const findByOwner = (ownerId) =>
   Publication.find({ owner: ownerId })
     .select("title photos type status createdAt")
@@ -28,6 +28,18 @@ const findByOwner = (ownerId) =>
 const updateById = (id, data) =>
   Publication.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 
+const incrementReportCount = (id) =>
+  Publication.findByIdAndUpdate(id, { $inc: { reportCount: 1 } }, { new: true });
+
 const deleteById = (id) => Publication.findByIdAndDelete(id);
 
-module.exports = { create, findById, findAll, countAll, findByOwner, updateById, deleteById };
+module.exports = {
+  create,
+  findById,
+  findAll,
+  countAll,
+  findByOwner,
+  updateById,
+  incrementReportCount,
+  deleteById,
+};
