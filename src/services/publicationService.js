@@ -1,6 +1,7 @@
 const publicationRepository = require("../repositories/publicationRepository");
 const reportRepository = require("../repositories/reportRepository");
 const buildPublicationQuery = require("../helpers/buildPublicationQuery");
+const { buildPagination } = require("../helpers/buildPagination");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
 const AppError = require("../helpers/AppError");
 
@@ -78,9 +79,7 @@ const verDetalle = async (publicationId, requesterId = null) => {
 
 // page y limit se clampean en el service; no se confía en que el cliente envíe valores razonables.
 const listar = async (filtros) => {
-  const page = Math.max(1, parseInt(filtros.page) || 1);
-  const limit = Math.min(50, Math.max(1, parseInt(filtros.limit) || 12));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = buildPagination(filtros);
 
   const query = buildPublicationQuery({
     category: filtros.category,

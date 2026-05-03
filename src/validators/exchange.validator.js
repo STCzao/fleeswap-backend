@@ -1,4 +1,7 @@
-const { body } = require("express-validator");
+const { body, query } = require("express-validator");
+const { paginationRules } = require("./pagination.validator");
+
+const ESTADOS = ["pending", "active", "completed", "cancelled", "rejected"];
 
 const enviarSolicitudValidator = [
   body("offeredPublicationId")
@@ -17,6 +20,15 @@ const enviarSolicitudValidator = [
     .withMessage("El monto complementario debe ser un número positivo"),
 ];
 
+const listarValidator = [
+  ...paginationRules,
+  query("status")
+    .optional()
+    .isIn(ESTADOS)
+    .withMessage("Estado inválido"),
+];
+
 module.exports = {
   enviarSolicitudValidator,
+  listarValidator,
 };

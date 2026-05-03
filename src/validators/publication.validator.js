@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+const { paginationRules } = require("./pagination.validator");
 
 const CATEGORIAS = [
   "electronica",
@@ -114,10 +115,15 @@ const reportarValidator = [
     .withMessage("Los detalles no pueden superar los 500 caracteres"),
 ];
 
+const listarValidator = [
+  ...paginationRules,
+];
+
 module.exports = {
   crearValidator,
   editarValidator,
   cambiarEstadoValidator,
   reportarValidator,
   eliminarValidator,
+  listarValidator,
 };

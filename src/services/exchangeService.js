@@ -1,5 +1,6 @@
 const exchangeRepository = require("../repositories/exchangeRepository");
 const publicationRepository = require("../repositories/publicationRepository");
+const { buildPagination } = require("../helpers/buildPagination");
 const AppError = require("../helpers/AppError");
 
 const enviarSolicitud = async (
@@ -47,6 +48,48 @@ const enviarSolicitud = async (
   return exchange;
 };
 
+const obtenerRecibidas = async (ownerId, query) => {
+  const { page, limit, skip } = buildPagination(query);
+  const filter = query.status ? { status: query.status } : {};
+
+  const [exchanges, total] = await Promise.all([
+    exchangeRepository.findReceivedByOwner(ownerId, filter, { skip, limit }),
+    exchangeRepository.countReceived(ownerId, filter),
+  ]);
+
+  return {
+    exchanges,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+const obtenerEnviadas = async (requesterId, query) => {
+  const { page, limit, skip } = buildPagination(query);
+  const filter = query.status ? { status: query.status } : {};
+
+  const [exchanges, total] = await Promise.all([
+    exchangeRepository.findSentByRequester(requesterId, filter, { skip, limit }),
+    exchangeRepository.countSent(requesterId, filter),
+  ]);
+
+  return {
+    exchanges,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
 module.exports = {
   enviarSolicitud,
+  obtenerRecibidas,
+  obtenerEnviadas,
 };
