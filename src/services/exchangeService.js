@@ -161,6 +161,14 @@ const confirmarIntercambio = async (userId, exchangeId) => {
 
   if (ambasConfirmadas) {
     data.status = "completed";
+    await Promise.all([
+      publicationRepository.updateById(exchange.offeredPublication._id, {
+        intercambioActivo: false,
+      }),
+      publicationRepository.updateById(exchange.requestedPublication._id, {
+        intercambioActivo: false,
+      }),
+    ]);
   }
 
   const updatedExchange = await exchangeRepository.updateById(exchangeId, data);
