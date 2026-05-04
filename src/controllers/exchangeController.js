@@ -60,6 +60,16 @@ const confirmarIntercambio = async (req, res, next) => {
   }
 };
 
+// PATCH /api/exchanges/:id/cancel
+const cancelarIntercambio = async (req, res, next) => {
+  try {
+    const exchange = await exchangeService.cancelarIntercambio(req.user._id, req.params.id);
+    res.status(200).json(exchange);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   enviarSolicitud,
   obtenerRecibidas,
@@ -67,4 +77,5 @@ module.exports = {
   aceptarSolicitud,
   rechazarSolicitud,
   confirmarIntercambio,
+  cancelarIntercambio,
 };

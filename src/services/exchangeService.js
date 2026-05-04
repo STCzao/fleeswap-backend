@@ -177,6 +177,37 @@ const confirmarIntercambio = async (userId, exchangeId) => {
   return updatedExchange;
 };
 
+const cancelarIntercambio = async (userId, exchangeId) => {
+  const exchange = await exchangeRepository.findById(exchangeId);
+  if (!exchange) throw new AppError("Solicitud no encontrada", 404);
+
+  const esRequester = exchange.requester._id.toString() === userId.toString();
+  const esOwner = exchange.owner.toString() === userId.toString();
+
+  if (!esRequester && !esOwner) {
+    throw new AppError("No participás en este intercambio", 403);
+  }
+  if (exchange.status !== "active") {
+    throw new AppError("Solo podés cancelar un intercambio en curso", 400);
+  }
+
+  const [updatedExchange] = await Promise.all([
+    exchangeRepository.updateById(exchangeId, { status: "cancelled" }),
+    publicationRepository.updateById(exchange.offeredPublication._id, {
+      status: "available",
+      intercambioActivo: false,
+    }),
+    publicationRepository.updateById(exchange.requestedPublication._id, {
+      status: "available",
+      intercambioActivo: false,
+    }),
+  ]);
+
+  // TODO: emitir evento socket chat:closed a ambos usuarios (Sprint 5).
+  // TODO: emitir notificación a la otra parte (Sprint 5).
+  return updatedExchange;
+};
+
 module.exports = {
   enviarSolicitud,
   obtenerRecibidas,
@@ -184,4 +215,5 @@ module.exports = {
   aceptarSolicitud,
   rechazarSolicitud,
   confirmarIntercambio,
+  cancelarIntercambio,
 };

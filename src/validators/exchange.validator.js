@@ -34,8 +34,15 @@ const accionSolicitudValidator = [
     .withMessage("ID de solicitud inválido"),
 ];
 
+const cancelarValidator = [
+  body("confirmacion")
+    .custom((val) => val === true)
+    .withMessage("Se requiere confirmación para cancelar"),
+];
+
 module.exports = {
   enviarSolicitudValidator,
   listarValidator,
   accionSolicitudValidator,
+  cancelarValidator,
 };

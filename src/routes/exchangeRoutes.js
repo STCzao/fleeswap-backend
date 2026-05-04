@@ -5,6 +5,7 @@ const {
   enviarSolicitudValidator,
   listarValidator,
   accionSolicitudValidator,
+  cancelarValidator,
 } = require("../validators/exchange.validator");
 const {
   enviarSolicitud,
@@ -13,6 +14,7 @@ const {
   aceptarSolicitud,
   rechazarSolicitud,
   confirmarIntercambio,
+  cancelarIntercambio,
 } = require("../controllers/exchangeController");
 
 const router = Router();
@@ -22,6 +24,14 @@ router.get("/sent", authenticate, listarValidator, validarCampos, obtenerEnviada
 router.patch("/:id/accept", authenticate, accionSolicitudValidator, validarCampos, aceptarSolicitud);
 router.patch("/:id/reject", authenticate, accionSolicitudValidator, validarCampos, rechazarSolicitud);
 router.patch("/:id/confirm", authenticate, accionSolicitudValidator, validarCampos, confirmarIntercambio);
+router.patch(
+  "/:id/cancel",
+  authenticate,
+  accionSolicitudValidator,
+  cancelarValidator,
+  validarCampos,
+  cancelarIntercambio,
+);
 router.post("/", authenticate, enviarSolicitudValidator, validarCampos, enviarSolicitud);
 
 module.exports = router;
