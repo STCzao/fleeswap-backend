@@ -18,6 +18,9 @@ const findActiveByRequesterAndPublication = (requesterId, requestedPublicationId
 const updateStatusById = (id, status) =>
   Exchange.findByIdAndUpdate(id, { status }, { new: true });
 
+const updateById = (id, data) =>
+  Exchange.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+
 const rejectPendingByPublications = (publicationIds, excludeId) =>
   Exchange.updateMany(
     {
@@ -60,6 +63,7 @@ module.exports = {
   findById,
   findActiveByRequesterAndPublication,
   updateStatusById,
+  updateById,
   rejectPendingByPublications,
   findReceivedByOwner,
   countReceived,

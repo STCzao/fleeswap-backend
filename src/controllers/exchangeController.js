@@ -50,10 +50,21 @@ const rechazarSolicitud = async (req, res, next) => {
   }
 };
 
+// PATCH /api/exchanges/:id/confirm
+const confirmarIntercambio = async (req, res, next) => {
+  try {
+    const exchange = await exchangeService.confirmarIntercambio(req.user._id, req.params.id);
+    res.status(200).json(exchange);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
   aceptarSolicitud,
   rechazarSolicitud,
+  confirmarIntercambio,
 };

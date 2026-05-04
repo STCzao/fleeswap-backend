@@ -134,10 +134,46 @@ const rechazarSolicitud = async (ownerId, exchangeId) => {
   return updatedExchange;
 };
 
+const confirmarIntercambio = async (userId, exchangeId) => {
+  const exchange = await exchangeRepository.findById(exchangeId);
+  if (!exchange) throw new AppError("Solicitud no encontrada", 404);
+
+  const esRequester = exchange.requester._id.toString() === userId.toString();
+  const esOwner = exchange.owner.toString() === userId.toString();
+
+  if (!esRequester && !esOwner) {
+    throw new AppError("No participás en este intercambio", 403);
+  }
+  if (exchange.status !== "active") {
+    throw new AppError("El intercambio no está en curso", 400);
+  }
+  if ((esRequester && exchange.confirmedByRequester) || (esOwner && exchange.confirmedByOwner)) {
+    throw new AppError("Ya confirmaste este intercambio", 400);
+  }
+
+  const data = esRequester
+    ? { confirmedByRequester: true }
+    : { confirmedByOwner: true };
+
+  const ambasConfirmadas =
+    (esRequester && exchange.confirmedByOwner) ||
+    (esOwner && exchange.confirmedByRequester);
+
+  if (ambasConfirmadas) {
+    data.status = "completed";
+  }
+
+  const updatedExchange = await exchangeRepository.updateById(exchangeId, data);
+
+  // TODO: si status === "completed", habilitar flujo de reviews (Sprint 6).
+  return updatedExchange;
+};
+
 module.exports = {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
   aceptarSolicitud,
   rechazarSolicitud,
+  confirmarIntercambio,
 };
