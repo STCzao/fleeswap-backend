@@ -88,8 +88,56 @@ const obtenerEnviadas = async (requesterId, query) => {
   };
 };
 
+const aceptarSolicitud = async (ownerId, exchangeId) => {
+  const exchange = await exchangeRepository.findById(exchangeId);
+  if (!exchange) throw new AppError("Solicitud no encontrada", 404);
+  if (exchange.owner.toString() !== ownerId.toString()) throw new AppError("No autorizado", 403);
+  if (exchange.status !== "pending") {
+    throw new AppError("La solicitud no está en estado pendiente", 400);
+  }
+
+  const updatedExchange = await exchangeRepository.updateStatusById(exchangeId, "active");
+  const offeredPublicationId = exchange.offeredPublication._id;
+  const requestedPublicationId = exchange.requestedPublication._id;
+
+  await Promise.all([
+    publicationRepository.updateById(offeredPublicationId, {
+      status: "unavailable",
+      intercambioActivo: true,
+    }),
+    publicationRepository.updateById(requestedPublicationId, {
+      status: "unavailable",
+      intercambioActivo: true,
+    }),
+    exchangeRepository.rejectPendingByPublications(
+      [offeredPublicationId, requestedPublicationId],
+      exchangeId,
+    ),
+  ]);
+
+  // TODO: emitir evento socket chat:enabled a requester y owner (Sprint 5).
+  // TODO: emitir notificación al requester (Sprint 5).
+  return updatedExchange;
+};
+
+const rechazarSolicitud = async (ownerId, exchangeId) => {
+  const exchange = await exchangeRepository.findById(exchangeId);
+  if (!exchange) throw new AppError("Solicitud no encontrada", 404);
+  if (exchange.owner.toString() !== ownerId.toString()) throw new AppError("No autorizado", 403);
+  if (exchange.status !== "pending") {
+    throw new AppError("La solicitud no está en estado pendiente", 400);
+  }
+
+  const updatedExchange = await exchangeRepository.updateStatusById(exchangeId, "rejected");
+
+  // TODO: emitir notificación al requester (Sprint 5).
+  return updatedExchange;
+};
+
 module.exports = {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
+  aceptarSolicitud,
+  rechazarSolicitud,
 };

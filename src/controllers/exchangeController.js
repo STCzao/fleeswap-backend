@@ -30,8 +30,30 @@ const obtenerEnviadas = async (req, res, next) => {
   }
 };
 
+// PATCH /api/exchanges/:id/accept
+const aceptarSolicitud = async (req, res, next) => {
+  try {
+    const exchange = await exchangeService.aceptarSolicitud(req.user._id, req.params.id);
+    res.status(200).json(exchange);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PATCH /api/exchanges/:id/reject
+const rechazarSolicitud = async (req, res, next) => {
+  try {
+    const exchange = await exchangeService.rechazarSolicitud(req.user._id, req.params.id);
+    res.status(200).json(exchange);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
+  aceptarSolicitud,
+  rechazarSolicitud,
 };

@@ -2,12 +2,34 @@ const Exchange = require("../models/Exchange");
 
 const create = (data) => Exchange.create(data);
 
+const findById = (id) =>
+  Exchange.findById(id)
+    .populate("offeredPublication", "_id status")
+    .populate("requestedPublication", "_id status")
+    .populate("requester", "nombre apellido");
+
 const findActiveByRequesterAndPublication = (requesterId, requestedPublicationId) =>
   Exchange.findOne({
     requester: requesterId,
     requestedPublication: requestedPublicationId,
     status: { $in: ["pending", "active"] },
   });
+
+const updateStatusById = (id, status) =>
+  Exchange.findByIdAndUpdate(id, { status }, { new: true });
+
+const rejectPendingByPublications = (publicationIds, excludeId) =>
+  Exchange.updateMany(
+    {
+      _id: { $ne: excludeId },
+      status: "pending",
+      $or: [
+        { offeredPublication: { $in: publicationIds } },
+        { requestedPublication: { $in: publicationIds } },
+      ],
+    },
+    { status: "rejected" },
+  );
 
 const findReceivedByOwner = (ownerId, statusFilter, { skip, limit }) =>
   Exchange.find({ owner: ownerId, ...statusFilter })
@@ -35,7 +57,10 @@ const countSent = (requesterId, statusFilter) =>
 
 module.exports = {
   create,
+  findById,
   findActiveByRequesterAndPublication,
+  updateStatusById,
+  rejectPendingByPublications,
   findReceivedByOwner,
   countReceived,
   findSentByRequester,

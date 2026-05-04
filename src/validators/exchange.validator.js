@@ -1,4 +1,4 @@
-const { body, query } = require("express-validator");
+const { body, query, param } = require("express-validator");
 const { paginationRules } = require("./pagination.validator");
 
 const ESTADOS = ["pending", "active", "completed", "cancelled", "rejected"];
@@ -28,7 +28,14 @@ const listarValidator = [
     .withMessage("Estado inválido"),
 ];
 
+const accionSolicitudValidator = [
+  param("id")
+    .isMongoId()
+    .withMessage("ID de solicitud inválido"),
+];
+
 module.exports = {
   enviarSolicitudValidator,
   listarValidator,
+  accionSolicitudValidator,
 };
