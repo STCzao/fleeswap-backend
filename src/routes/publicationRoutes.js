@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { crearValidator, editarValidator, cambiarEstadoValidator, reportarValidator, eliminarValidator } = require("../validators/publication.validator");
+const { crearValidator, editarValidator, cambiarEstadoValidator, reportarValidator, eliminarValidator, listarValidator } = require("../validators/publication.validator");
 const validarCampos = require("../middlewares/validarCampos");
 const authenticate = require("../middlewares/authenticate");
 const optionalAuthenticate = require("../middlewares/optionalAuthenticate");
@@ -7,7 +7,7 @@ const { crear, editar, eliminar, cambiarEstado, verDetalle, listar, reportar } =
 
 const router = Router();
 
-router.get("/", listar);
+router.get("/", listarValidator, validarCampos, listar);
 // optionalAuthenticate permite identificar al owner para mostrarle sus publicaciones unavailable
 router.get("/:id", optionalAuthenticate, verDetalle);
 
