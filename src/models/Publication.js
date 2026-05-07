@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 // photos se valida con dos validators separados porque Mongoose ejecuta cada uno
-// independientemente — un único validator con && no genera mensajes distintos por caso.
+// independientemente; un único validator con && no genera mensajes distintos por caso.
 const publicationSchema = new mongoose.Schema(
   {
     title: {
@@ -70,8 +70,12 @@ const publicationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["available", "unavailable"],
+      enum: ["available", "unavailable", "suspended"],
       default: "available",
+    },
+    reportCount: {
+      type: Number,
+      default: 0,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,

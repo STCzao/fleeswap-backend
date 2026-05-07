@@ -1,8 +1,11 @@
 const publicationRepository = require("../repositories/publicationRepository");
 const reportRepository = require("../repositories/reportRepository");
 const buildPublicationQuery = require("../helpers/buildPublicationQuery");
+const { buildPagination } = require("../helpers/buildPagination");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
 const AppError = require("../helpers/AppError");
+
+const REPORT_THRESHOLD = 5;
 
 const crear = async (
   ownerId,
@@ -58,13 +61,13 @@ const cambiarEstado = async (publicationId, ownerId, status) => {
   return publicationRepository.updateById(publicationId, { status });
 };
 
-// requesterId es opcional — viene del optionalAuthenticate middleware.
-// Una publicación unavailable solo es visible para su owner; para el resto es 404.
+// requesterId es opcional; viene del optionalAuthenticate middleware.
+// Una publicación unavailable o suspended solo es visible para su owner; para el resto es 404.
 const verDetalle = async (publicationId, requesterId = null) => {
   const publication = await publicationRepository.findById(publicationId);
   if (!publication) throw new AppError("Publicación no encontrada", 404);
 
-  if (publication.status === "unavailable") {
+  if (publication.status === "unavailable" || publication.status === "suspended") {
     const isOwner =
       requesterId &&
       publication.owner._id.toString() === requesterId.toString();
@@ -74,11 +77,9 @@ const verDetalle = async (publicationId, requesterId = null) => {
   return publication;
 };
 
-// page y limit se clampean en el service — no se confía en que el cliente envíe valores razonables.
+// page y limit se clampean en el service; no se confía en que el cliente envíe valores razonables.
 const listar = async (filtros) => {
-  const page = Math.max(1, parseInt(filtros.page) || 1);
-  const limit = Math.min(50, Math.max(1, parseInt(filtros.limit) || 12));
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = buildPagination(filtros);
 
   const query = buildPublicationQuery({
     category: filtros.category,
@@ -87,7 +88,7 @@ const listar = async (filtros) => {
     search: filtros.search,
   });
 
-  // Promise.all orquesta ambas queries en paralelo — el repository expone operaciones atómicas.
+  // Promise.all orquesta ambas queries en paralelo; el repository expone operaciones atómicas.
   const [publications, total] = await Promise.all([
     publicationRepository.findAll(query, { skip, limit }),
     publicationRepository.countAll(query),
@@ -104,11 +105,11 @@ const listar = async (filtros) => {
   };
 };
 
-const reportar = async (publicationId, reporterId, reason) => {
+const reportar = async (publicationId, reporterId, reason, details) => {
   const publication = await publicationRepository.findById(publicationId);
   if (!publication) throw new AppError("Publicación no encontrada", 404);
 
-  // Bloqueamos el auto-reporte — un dueño no puede usar el sistema de reportes para inflar métricas falsas.
+  // Bloqueamos el auto-reporte; un dueño no puede usar el sistema de reportes para inflar métricas falsas.
   if (publication.owner._id.toString() === reporterId.toString()) {
     throw new AppError("No podés reportar tu propia publicación", 400);
   }
@@ -119,7 +120,15 @@ const reportar = async (publicationId, reporterId, reason) => {
   );
   if (existente) throw new AppError("Ya reportaste esta publicación", 409);
 
-  await reportRepository.create({ publicationId, reporterId, reason });
+  await reportRepository.create({ publicationId, reporterId, reason, details });
+
+  const updatedPublication = await publicationRepository.incrementReportCount(publicationId);
+  if (
+    updatedPublication.reportCount >= REPORT_THRESHOLD &&
+    updatedPublication.status !== "suspended"
+  ) {
+    await publicationRepository.updateById(publicationId, { status: "suspended" });
+  }
 };
 
 module.exports = {

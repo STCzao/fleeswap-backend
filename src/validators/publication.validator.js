@@ -1,4 +1,5 @@
 const { body } = require("express-validator");
+const { paginationRules } = require("./pagination.validator");
 
 const CATEGORIAS = [
   "electronica",
@@ -14,7 +15,14 @@ const CATEGORIAS = [
 ];
 const CONDICIONES = ["nuevo", "como_nuevo", "bueno", "regular", "deteriorado"];
 const TIPOS = ["trueque", "venta", "ambos"];
-const MOTIVOS = ["falso", "enganoso", "inapropiado", "otro"];
+const MOTIVOS = [
+  "spam",
+  "contenido_inapropiado",
+  "objeto_falso",
+  "descripcion_enganosa",
+  "precio_abusivo",
+  "otro",
+];
 
 const crearValidator = [
   body("title")
@@ -82,7 +90,7 @@ const editarValidator = [
     .optional()
     .isArray({ min: 1, max: 5 })
     .withMessage("Debe incluir entre 1 y 5 fotos"),
-  // Sin .optional() — si photos está presente, cada elemento debe ser URL válida sin excepción.
+  // Sin .optional(): si photos está presente, cada elemento debe ser URL válida sin excepción.
   body("photos.*").isURL().withMessage("Cada foto debe ser una URL válida"),
 ];
 
@@ -95,11 +103,20 @@ const cambiarEstadoValidator = [
 const eliminarValidator = [
   body("confirmacion")
     .custom((val) => val === true)
-    .withMessage("Se require confirmacion para eliminar"),
+    .withMessage("Se requiere confirmación para eliminar"),
 ];
 
 const reportarValidator = [
   body("reason").isIn(MOTIVOS).withMessage("Motivo de reporte inválido"),
+  body("details")
+    .optional()
+    .isString()
+    .isLength({ max: 500 })
+    .withMessage("Los detalles no pueden superar los 500 caracteres"),
+];
+
+const listarValidator = [
+  ...paginationRules,
 ];
 
 module.exports = {
@@ -108,4 +125,5 @@ module.exports = {
   cambiarEstadoValidator,
   reportarValidator,
   eliminarValidator,
+  listarValidator,
 };
