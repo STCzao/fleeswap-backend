@@ -8,6 +8,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const publicationRoutes = require("./routes/publicationRoutes");
 const exchangeRoutes = require("./routes/exchangeRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
@@ -47,7 +48,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/publications", publicationRoutes);
 app.use("/api/exchanges", exchangeRoutes);
-//app.use("/api/admin", adminRoutes);
+app.use("/api/admin", adminRoutes);
 // app.use("/api/wishlist", wishlistRoutes);
 // app.use("/api/notifications", notificationRoutes);
 
