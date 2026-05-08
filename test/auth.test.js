@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const app = require("../src/app");
 const User = require("../src/models/User");
 
+describe("Auth API", () => {
+
 before(async () => {
   await mongoose.connect(process.env.MONGO_URI);
 });
@@ -159,6 +161,8 @@ describe("Rutas protegidas — authenticate middleware", () => {
 
   expect(res.status).to.equal(401);
   expect(res.body).to.have.property("message", "Token expirado");
+});
+
 });
 
 });

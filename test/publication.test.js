@@ -41,6 +41,8 @@ async function registrarYLoguear() {
 
 // ─── Setup / Teardown ───────────────────────────────────────────────────────
 
+describe("Publication API", () => {
+
 before(async () => {
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(process.env.MONGO_URI);
@@ -649,9 +651,7 @@ describe("E: DELETE /api/publications/:id — Eliminar publicación", () => {
       .set("Authorization", `Bearer ${otroToken}`)
       .send({ confirmacion: true });
 
-    // Cambiar a 403 cuando se corrija el bug (igual que D02)
-    expect(res.status).to.equal(404); // BUG: debería ser 403
-    // expect(res.status).to.equal(403); // descomentar post-fix
+    expect(res.status).to.equal(403);
 
     // La publicación debe seguir existiendo
     const enDb = await Publication.findById(publicacionId);
@@ -667,7 +667,7 @@ describe("E: DELETE /api/publications/:id — Eliminar publicación", () => {
       .send({});
 
     expect(res.status).to.equal(400);
-    expect(res.body).to.have.property("message"); // o "errors" post bug-fix
+    expect(res.body).to.have.property("errors");
   });
 
   // ── E05: Sin token, responde 401 ────────────────────────────────────────
@@ -842,5 +842,7 @@ describe("G: GET /api/publications/:id — Ver detalle de publicación", () => {
 
     expect(res.status).to.equal(404);
   });
+
+});
 
 });

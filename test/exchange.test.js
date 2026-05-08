@@ -26,6 +26,8 @@ const crearPublicacion = (overrides = {}) => ({
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 
+describe("Exchange API", () => {
+
 before(async () => {
   await mongoose.connect(process.env.MONGO_URI);
 });
@@ -508,5 +510,7 @@ describe("POST /api/exchanges — Solicitud de intercambio", () => {
     expect(res.status).to.equal(400);
     expect(res.body).to.have.property("message");
     });
+
+});
 
 });
