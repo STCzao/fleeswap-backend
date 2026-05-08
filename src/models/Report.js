@@ -16,9 +16,20 @@ const reportSchema = new mongoose.Schema(
       type: String,
       required: [true, "El motivo del reporte es requerido"],
       enum: {
-        values: ["falso", "enganoso", "inapropiado", "otro"],
+        values: [
+          "spam",
+          "contenido_inapropiado",
+          "objeto_falso",
+          "descripcion_enganosa",
+          "precio_abusivo",
+          "otro",
+        ],
         message: "Motivo de reporte inválido",
       },
+    },
+    details: {
+      type: String,
+      maxlength: [500, "Los detalles no pueden superar los 500 caracteres"],
     },
     status: {
       type: String,
@@ -29,7 +40,7 @@ const reportSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Índice compuesto único — garantiza la restricción de un reporte por usuario/publicación
+// Índice compuesto único: garantiza la restricción de un reporte por usuario/publicación
 // a nivel de DB, como segunda línea de defensa tras el check en el service.
 reportSchema.index({ publicationId: 1, reporterId: 1 }, { unique: true });
 

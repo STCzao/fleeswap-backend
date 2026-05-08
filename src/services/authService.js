@@ -73,12 +73,11 @@ const register = async ({ nombre, apellido, fechaNacimiento, email, password }) 
     accessToken,
     refreshToken,
     user: {
-      id: user._id,
+      _id: user._id,
       nombre: user.nombre,
       apellido: user.apellido,
-      email: user.email,
-      role: user.role,
-      isVerified: user.isVerified,
+      photo: user.photo,
+      profileComplete: user.profileComplete,
     },
   };
 };
@@ -130,12 +129,11 @@ const login = async ({ email, password }) => {
     refreshToken,
     reactivated,
     user: {
-      id: user._id,
+      _id: user._id,
       nombre: user.nombre,
       apellido: user.apellido,
-      email: user.email,
-      role: user.role,
-      isVerified: user.isVerified,
+      photo: user.photo,
+      profileComplete: user.profileComplete,
     },
   };
 };

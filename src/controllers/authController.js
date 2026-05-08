@@ -1,5 +1,18 @@
 const authService = require("../services/authService");
 
+const isProd = process.env.NODE_ENV === "production";
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+  maxAge: Number(process.env.JWT_REFRESH_EXPIRES_IN_MS),
+};
+const clearCookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+};
+
 // POST /api/auth/register
 // El middleware validate ya garantiza que los datos son válidos.
 // Solo delega al service y propaga errores al errorHandler global via next(err).
@@ -7,12 +20,7 @@ const register = async (req, res, next) => {
   try {
     const { accessToken, refreshToken, user } = await authService.register(req.body);
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: Number(process.env.JWT_REFRESH_EXPIRES_IN_MS),
-    });
+    res.cookie("refreshToken", refreshToken, cookieOptions);
 
     res.status(201).json({ accessToken, user });
   } catch (err) {
@@ -29,12 +37,7 @@ const login = async (req, res, next) => {
   try {
     const { accessToken, refreshToken, reactivated, user } = await authService.login(req.body);
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: Number(process.env.JWT_REFRESH_EXPIRES_IN_MS),
-    });
+    res.cookie("refreshToken", refreshToken, cookieOptions);
 
     const response = { accessToken, user };
     if (reactivated) response.reactivated = true;
@@ -53,12 +56,7 @@ const refresh = async (req, res, next) => {
     const { refreshToken: oldToken } = req.cookies;
     const { accessToken, refreshToken } = await authService.refresh(oldToken);
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: Number(process.env.JWT_REFRESH_EXPIRES_IN_MS),
-    });
+    res.cookie("refreshToken", refreshToken, cookieOptions);
 
     res.status(200).json({ accessToken });
   } catch (err) {
@@ -73,11 +71,7 @@ const logout = async (req, res, next) => {
   try {
     await authService.logout(req.cookies.refreshToken);
 
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
+    res.clearCookie("refreshToken", clearCookieOptions);
 
     res.status(200).json({ message: "Sesión cerrada correctamente" });
   } catch (err) {
@@ -93,11 +87,7 @@ const cambiarPassword = async (req, res, next) => {
     const { passwordActual, passwordNueva } = req.body;
     await authService.cambiarPassword(req.user._id, passwordActual, passwordNueva);
 
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
+    res.clearCookie("refreshToken", clearCookieOptions);
 
     res.status(200).json({ message: "Contraseña actualizada correctamente" });
   } catch (err) {

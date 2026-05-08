@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 // photos se valida con dos validators separados porque Mongoose ejecuta cada uno
-// independientemente — un único validator con && no genera mensajes distintos por caso.
+// independientemente; un único validator con && no genera mensajes distintos por caso.
 const publicationSchema = new mongoose.Schema(
   {
     title: {
@@ -24,7 +24,18 @@ const publicationSchema = new mongoose.Schema(
       type: String,
       required: [true, "La categoría es requerida"],
       enum: {
-        values: ["electronica", "ropa_accesorios", "coleccionables", "libros_comics", "deportes", "hogar_deco", "juguetes", "arte", "musica", "otros"],
+        values: [
+          "electronica",
+          "ropa_accesorios",
+          "coleccionables",
+          "libros_comics",
+          "deportes",
+          "hogar_deco",
+          "juguetes",
+          "arte",
+          "musica",
+          "otros",
+        ],
         message: "Categoría inválida",
       },
     },
@@ -47,22 +58,36 @@ const publicationSchema = new mongoose.Schema(
     photos: {
       type: [String],
       validate: [
-        { validator: (arr) => arr.length >= 1, message: "Debe incluir al menos 1 foto" },
-        { validator: (arr) => arr.length <= 5, message: "No puede incluir más de 5 fotos" },
+        {
+          validator: (arr) => arr.length >= 1,
+          message: "Debe incluir al menos 1 foto",
+        },
+        {
+          validator: (arr) => arr.length <= 5,
+          message: "No puede incluir más de 5 fotos",
+        },
       ],
     },
     status: {
       type: String,
-      enum: ["available", "unavailable"],
+      enum: ["available", "unavailable", "suspended"],
       default: "available",
+    },
+    reportCount: {
+      type: Number,
+      default: 0,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+    intercambioActivo: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Índice de texto para que $regex en búsqueda por palabras clave use el índice en lugar de hacer collection scan.
