@@ -1,9 +1,10 @@
 // Construye el objeto query para filtrar publicaciones.
 // El $in en type garantiza que publicaciones 'ambos' aparezcan al filtrar por 'trueque' o 'venta'.
 // El $regex en search opera case-insensitive sobre título y descripción.
-const buildPublicationQuery = ({ category, type, condition, search } = {}) => {
+const buildPublicationQuery = ({ category, type, condition, search, userId } = {}) => {
   const query = { status: "available" };
 
+  if (userId) query.owner = userId;
   if (category) query.category = category;
   if (condition) query.condition = condition;
   if (type) query.type = type === "ambos" ? "ambos" : { $in: [type, "ambos"] };

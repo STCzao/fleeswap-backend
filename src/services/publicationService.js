@@ -86,6 +86,7 @@ const listar = async (filtros) => {
     type: filtros.type,
     condition: filtros.condition,
     search: filtros.search,
+    userId: filtros.userId,
   });
 
   // Promise.all orquesta ambas queries en paralelo; el repository expone operaciones atómicas.
