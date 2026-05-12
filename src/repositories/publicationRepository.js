@@ -10,7 +10,7 @@ const findById = (id) =>
 // status excluido; siempre es 'available' en el listado público, no aporta información variable.
 const findAll = (query, { skip, limit }) =>
   Publication.find(query)
-    .select("title photos type category condition owner createdAt")
+    .select("title photos type category condition status owner createdAt")
     .populate("owner", "nombre apellido location")
     .sort({ createdAt: -1 })
     .skip(skip)
