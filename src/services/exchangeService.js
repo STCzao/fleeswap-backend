@@ -181,7 +181,7 @@ const cancelarIntercambio = async (userId, exchangeId) => {
   const exchange = await exchangeRepository.findById(exchangeId);
   if (!exchange) throw new AppError("Solicitud no encontrada", 404);
 
-  const esRequester = exchange.requester._id.toString() === userId.toString();
+  const esRequester = (exchange.requester._id || exchange.requester).toString() === userId.toString();
   const esOwner = exchange.owner.toString() === userId.toString();
 
   if (!esRequester && !esOwner) {
@@ -189,7 +189,6 @@ const cancelarIntercambio = async (userId, exchangeId) => {
   }
 
   // Si está pendiente, solo el requester puede "cancelar" (arrepentirse).
-  // El owner tiene la opción de "rechazar", que es semánticamente distinto.
   if (exchange.status === "pending") {
     if (!esRequester) {
       throw new AppError("Como dueño, debés rechazar la solicitud en lugar de cancelarla", 400);

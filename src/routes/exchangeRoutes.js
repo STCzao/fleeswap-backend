@@ -28,7 +28,6 @@ router.patch(
   "/:id/cancel",
   authenticate,
   accionSolicitudValidator,
-  cancelarValidator,
   validarCampos,
   cancelarIntercambio,
 );
