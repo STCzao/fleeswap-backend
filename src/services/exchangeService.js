@@ -187,8 +187,18 @@ const cancelarIntercambio = async (userId, exchangeId) => {
   if (!esRequester && !esOwner) {
     throw new AppError("No participás en este intercambio", 403);
   }
+
+  // Si está pendiente, solo el requester puede "cancelar" (arrepentirse).
+  // El owner tiene la opción de "rechazar", que es semánticamente distinto.
+  if (exchange.status === "pending") {
+    if (!esRequester) {
+      throw new AppError("Como dueño, debés rechazar la solicitud en lugar de cancelarla", 400);
+    }
+    return exchangeRepository.updateById(exchangeId, { status: "cancelled" });
+  }
+
   if (exchange.status !== "active") {
-    throw new AppError("Solo podés cancelar un intercambio en curso", 400);
+    throw new AppError("No se puede cancelar una solicitud en este estado", 400);
   }
 
   const [updatedExchange] = await Promise.all([
@@ -203,8 +213,6 @@ const cancelarIntercambio = async (userId, exchangeId) => {
     }),
   ]);
 
-  // TODO: emitir evento socket chat:closed a ambos usuarios (Sprint 5).
-  // TODO: emitir notificación a la otra parte (Sprint 5).
   return updatedExchange;
 };
 
