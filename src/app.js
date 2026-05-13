@@ -26,6 +26,7 @@ app.use((req, _res, next) => {
 const allowedOrigins = [
   process.env.FRONTEND_URL || "http://localhost:5173",
   "http://localhost:5173",
+  "https://fleeswap.vercel.app",
 ];
 app.use(cors({
   origin: (origin, callback) => {
