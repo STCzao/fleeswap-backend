@@ -62,6 +62,54 @@ const listarUsuarios = async ({ role, isActive, search, page }) => {
   };
 };
 
+const obtenerUsuarioPorId = async (id) => {
+  const usuario = await adminRepository.findUsuarioById(id);
+  if (!usuario) throw new AppError("Usuario no encontrado", 404);
+
+  return usuario;
+};
+
+const cambiarEstadoUsuario = async (targetUserId, currentUserId, isActive) => {
+  if (targetUserId.toString() === currentUserId.toString()) {
+    throw new AppError("El admin no puede operar sobre si mismo", 400);
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    const usuario = await adminRepository.actualizarUsuarioById(
+      targetUserId,
+      { isActive, ...(isActive ? { deletedAt: null } : { deletedAt: new Date() }) },
+      session,
+    );
+
+    if (!usuario) throw new AppError("Usuario no encontrado", 404);
+
+    if (!isActive) {
+      await adminRepository.suspenderPublicacionesDisponiblesDeUsuario(targetUserId, session);
+    }
+
+    await session.commitTransaction();
+    return usuario;
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
+};
+
+const cambiarRolUsuario = async (targetUserId, currentUserId, role) => {
+  if (targetUserId.toString() === currentUserId.toString()) {
+    throw new AppError("El admin no puede operar sobre si mismo", 400);
+  }
+
+  const usuario = await adminRepository.actualizarUsuarioById(targetUserId, { role });
+  if (!usuario) throw new AppError("Usuario no encontrado", 404);
+
+  return usuario;
+};
+
 const listarReportes = async ({ status, reason, page, limit }) => {
   const { page: pagina, limit: limite, skip } = buildPagination({ page, limit });
   const filtro = {};
@@ -80,6 +128,50 @@ const listarReportes = async ({ status, reason, page, limit }) => {
     pagina,
     totalPaginas: Math.ceil(total / limite),
   };
+};
+
+const listarPublicaciones = async ({ status, category, page, limit }) => {
+  const { page: pagina, limit: limite, skip } = buildPagination({ page, limit });
+  const filtro = {};
+
+  if (status) filtro.status = status;
+  if (category) filtro.category = category;
+
+  const [publicaciones, total] = await Promise.all([
+    adminRepository.listarPublicaciones(filtro, skip, limite),
+    adminRepository.contarPublicaciones(filtro),
+  ]);
+
+  return {
+    publicaciones,
+    total,
+    pagina,
+    totalPaginas: Math.ceil(total / limite),
+  };
+};
+
+const cambiarEstadoPublicacion = async (id, status) => {
+  const publicacion = await adminRepository.actualizarPublicacionById(id, { status });
+  if (!publicacion) throw new AppError("Publicación no encontrada", 404);
+
+  return publicacion;
+};
+
+const eliminarPublicacion = async (id) => {
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    const publicacion = await adminRepository.eliminarPublicacionById(id, session);
+    if (!publicacion) throw new AppError("Publicación no encontrada", 404);
+
+    await adminRepository.eliminarReportesDePublicacion(id, session);
+    await session.commitTransaction();
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
 };
 
 const resolverReporte = async (id, action) => {
@@ -110,4 +202,15 @@ const resolverReporte = async (id, action) => {
   return adminRepository.actualizarEstadoReporte(id, "dismissed");
 };
 
-module.exports = { obtenerStats, listarUsuarios, listarReportes, resolverReporte };
+module.exports = {
+  obtenerStats,
+  listarUsuarios,
+  obtenerUsuarioPorId,
+  cambiarEstadoUsuario,
+  cambiarRolUsuario,
+  listarReportes,
+  listarPublicaciones,
+  cambiarEstadoPublicacion,
+  eliminarPublicacion,
+  resolverReporte,
+};
