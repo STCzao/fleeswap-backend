@@ -1,4 +1,5 @@
 const userRepository = require("../repositories/userRepository");
+const exchangeRepository = require("../repositories/exchangeRepository");
 const publicationRepository = require("../repositories/publicationRepository");
 const bcrypt = require("bcrypt");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
@@ -35,7 +36,10 @@ const actualizarPerfil = async (userId, { photo, bio, location }) => {
 
 // Retorna el perfil propio del usuario autenticado: incluye datos privados como email e isVerified.
 const obtenerPerfil = async (userId) => {
-  const user = await userRepository.findById(userId);
+  const [user, intercambiosCompletados] = await Promise.all([
+    userRepository.findById(userId),
+    exchangeRepository.countCompletedByUser(userId),
+  ]);
   if (!user) throw new AppError("Usuario no encontrado", 404);
 
   return {
@@ -48,14 +52,15 @@ const obtenerPerfil = async (userId) => {
     location: user.location,
     isVerified: user.isVerified,
     profileComplete: user.profileComplete,
+    intercambiosCompletados,
   };
 };
 
-// Retorna el perfil publico de un usuario por id.
-// Incluye datos de reputacion con valores por defecto (0, []) hasta que
-// los modelos Exchange, Review y Publication esten disponibles en Sprint 2.
 const obtenerPerfilPublico = async (userId) => {
-  const user = await userRepository.findPublicById(userId);
+  const [user, intercambiosCompletados] = await Promise.all([
+    userRepository.findPublicById(userId),
+    exchangeRepository.countCompletedByUser(userId),
+  ]);
   if (!user) throw new AppError("Usuario no encontrado", 404);
 
   return {
@@ -66,10 +71,8 @@ const obtenerPerfilPublico = async (userId) => {
     bio: user.bio,
     location: user.location,
     miembroDesde: user.createdAt,
-    // TODO Sprint 2: reemplazar con datos reales de Exchange y Review
     calificacionPromedio: 0,
-    intercambiosCompletados: 0,
-    // TODO Sprint 2: reemplazar con publicaciones activas reales
+    intercambiosCompletados,
     publicaciones: [],
   };
 };
