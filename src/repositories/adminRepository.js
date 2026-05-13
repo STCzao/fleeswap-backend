@@ -14,6 +14,20 @@ const listarUsuarios = (filtro, skip, limit) =>
 
 const contarUsuarios = (filtro) => User.countDocuments(filtro);
 
+const findUsuarioById = (id) =>
+  User.findOne({ _id: id, isActive: { $exists: true } })
+    .select("nombre apellido email role isActive createdAt bio location photo isVerified")
+    .lean();
+
+const actualizarUsuarioById = (id, data, session) =>
+  User.findOneAndUpdate(
+    { _id: id, isActive: { $exists: true } },
+    data,
+    { new: true, runValidators: true, ...(session && { session }) },
+  )
+    .select("nombre apellido email role isActive createdAt bio location photo isVerified")
+    .lean();
+
 const listarReportes = (filtro, skip, limit) =>
   Report.find(filtro)
     .populate("publicationId", "title status reportCount owner")
@@ -43,6 +57,33 @@ const suspenderPublicacion = (publicationId, session) =>
     { new: true, ...(session && { session }) },
   );
 
+const suspenderPublicacionesDisponiblesDeUsuario = (ownerId, session) =>
+  Publication.updateMany(
+    { owner: ownerId, status: "available" },
+    { status: "suspended" },
+    { ...(session && { session }) },
+  );
+
+const listarPublicaciones = (filtro, skip, limit) =>
+  Publication.find(filtro)
+    .populate("owner", "nombre apellido email")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+const contarPublicaciones = (filtro) => Publication.countDocuments(filtro);
+
+const actualizarPublicacionById = (id, data) =>
+  Publication.findByIdAndUpdate(id, data, { new: true, runValidators: true })
+    .populate("owner", "nombre apellido email");
+
+const eliminarPublicacionById = (id, session) =>
+  Publication.findByIdAndDelete(id, { ...(session && { session }) });
+
+const eliminarReportesDePublicacion = (publicationId, session) =>
+  Report.deleteMany({ publicationId }, { ...(session && { session }) });
+
 const contarPublicacionesActivas = () =>
   Publication.countDocuments({ status: "available" });
 
@@ -56,11 +97,19 @@ module.exports = {
   contarUsuariosActivos,
   listarUsuarios,
   contarUsuarios,
+  findUsuarioById,
+  actualizarUsuarioById,
   listarReportes,
   contarReportes,
   findReporteById,
   actualizarEstadoReporte,
   suspenderPublicacion,
+  suspenderPublicacionesDisponiblesDeUsuario,
+  listarPublicaciones,
+  contarPublicaciones,
+  actualizarPublicacionById,
+  eliminarPublicacionById,
+  eliminarReportesDePublicacion,
   contarPublicacionesActivas,
   contarReportesPendientes,
   contarIntercambiosActivos,

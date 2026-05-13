@@ -1,5 +1,6 @@
 const { body, query, param } = require("express-validator");
 const { paginationRules } = require("./pagination.validator");
+const Publication = require("../models/Publication");
 
 const REPORT_REASONS = [
   "spam",
@@ -12,6 +13,58 @@ const REPORT_REASONS = [
 
 const REPORT_STATUS = ["pending", "reviewed", "dismissed"];
 const REPORT_ACTIONS = ["suspend_publication", "dismiss"];
+const USER_ROLES = ["USER_ROLE", "ADMIN_ROLE"];
+const PUBLICATION_STATUS = ["available", "unavailable", "suspended"];
+const PUBLICATION_CATEGORIES = Publication.schema.path("category").enumValues;
+
+const usuarioIdParamValidator = [
+  param("id")
+    .isMongoId()
+    .withMessage("ID de usuario invalido"),
+];
+
+const obtenerUsuarioAdminValidator = [...usuarioIdParamValidator];
+
+const cambiarEstadoUsuarioValidator = [
+  ...usuarioIdParamValidator,
+  body("isActive")
+    .isBoolean()
+    .withMessage("El estado de actividad debe ser booleano"),
+];
+
+const cambiarRolUsuarioValidator = [
+  ...usuarioIdParamValidator,
+  body("role")
+    .isIn(USER_ROLES)
+    .withMessage("Rol invalido"),
+];
+
+const listarPublicacionesAdminValidator = [
+  ...paginationRules,
+  query("status")
+    .optional()
+    .isIn(PUBLICATION_STATUS)
+    .withMessage("Estado de publicacion invalido"),
+  query("category")
+    .optional()
+    .isIn(PUBLICATION_CATEGORIES)
+    .withMessage("Categoria invalida"),
+];
+
+const publicacionIdParamValidator = [
+  param("id")
+    .isMongoId()
+    .withMessage("ID de publicacion invalido"),
+];
+
+const cambiarEstadoPublicacionValidator = [
+  ...publicacionIdParamValidator,
+  body("status")
+    .isIn(PUBLICATION_STATUS)
+    .withMessage("Estado de publicacion invalido"),
+];
+
+const eliminarPublicacionAdminValidator = [...publicacionIdParamValidator];
 
 const listarReportesValidator = [
   ...paginationRules,
@@ -36,4 +89,13 @@ const resolverReporteValidator = [
     .withMessage("Accion invalida"),
 ];
 
-module.exports = { listarReportesValidator, resolverReporteValidator };
+module.exports = {
+  obtenerUsuarioAdminValidator,
+  cambiarEstadoUsuarioValidator,
+  cambiarRolUsuarioValidator,
+  listarPublicacionesAdminValidator,
+  cambiarEstadoPublicacionValidator,
+  eliminarPublicacionAdminValidator,
+  listarReportesValidator,
+  resolverReporteValidator,
+};
