@@ -40,7 +40,6 @@ const obtenerPorId = async (req, res, next) => {
   }
 };
 
-
 // PATCH /api/exchanges/:id/accept
 const aceptarSolicitud = async (req, res, next) => {
   try {

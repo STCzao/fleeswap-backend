@@ -39,6 +39,27 @@ const cambiarRolUsuarioValidator = [
     .withMessage("Rol invalido"),
 ];
 
+const listarUsuariosAdminValidator = [
+  query("page")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("La página debe ser un número entero positivo"),
+  query("role")
+    .optional()
+    .isIn(USER_ROLES)
+    .withMessage("Rol inválido"),
+  query("isActive")
+    .optional()
+    .isIn(["true", "false"])
+    .withMessage("isActive debe ser 'true' o 'false'"),
+  query("search")
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage("La búsqueda no puede superar los 100 caracteres"),
+];
+
 const listarPublicacionesAdminValidator = [
   ...paginationRules,
   query("status")
@@ -93,6 +114,7 @@ module.exports = {
   obtenerUsuarioAdminValidator,
   cambiarEstadoUsuarioValidator,
   cambiarRolUsuarioValidator,
+  listarUsuariosAdminValidator,
   listarPublicacionesAdminValidator,
   cambiarEstadoPublicacionValidator,
   eliminarPublicacionAdminValidator,
