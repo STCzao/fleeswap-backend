@@ -30,8 +30,8 @@ const actualizarUsuarioById = (id, data, session) =>
 
 const listarReportes = (filtro, skip, limit) =>
   Report.find(filtro)
-    .populate("publicationId", "title status reportCount owner")
-    .populate("reporterId", "nombre apellido email")
+    .populate("publicationId", "title status reportCount owner photos")
+    .populate("reporterId", "nombre apellido email photo")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
@@ -47,8 +47,8 @@ const actualizarEstadoReporte = (id, status, session) =>
     { status },
     { new: true, ...(session && { session }) },
   )
-    .populate("publicationId", "title status reportCount owner")
-    .populate("reporterId", "nombre apellido email");
+    .populate("publicationId", "title status reportCount owner photos")
+    .populate("reporterId", "nombre apellido email photo");
 
 const suspenderPublicacion = (publicationId, session) =>
   Publication.findByIdAndUpdate(
