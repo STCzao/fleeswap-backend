@@ -17,8 +17,11 @@ const obtenerMensajes = async (userId, exchangeId, { before, limit }) => {
 
   if (!exchange) throw new AppError("Solicitud no encontrada", 404);
 
-  const esRequester = exchange.requester._id.toString() === userId.toString();
-  const esOwner = exchange.owner.toString() === userId.toString();
+  const requesterId = exchange.requester?._id?.toString() || exchange.requester?.toString();
+  const ownerId = exchange.owner?._id?.toString() || exchange.owner?.toString();
+
+  const esRequester = requesterId === userId.toString();
+  const esOwner = ownerId === userId.toString();
 
   if (!esRequester && !esOwner) {
     throw new AppError("No participás en este intercambio", 403);
