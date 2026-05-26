@@ -10,6 +10,13 @@ const findById = (id) =>
     .populate("owner", "nombre apellido photo")
     .select("+type");
 
+const findByIdWithDetails = (id) =>
+  Exchange.findById(id)
+    .populate("offeredPublication", "title photos category condition")
+    .populate("requestedPublication", "title photos category condition")
+    .populate("requester", "nombre apellido photo")
+    .populate("owner", "nombre apellido photo");
+
 const findActiveByRequesterAndPublication = (requesterId, requestedPublicationId) =>
   Exchange.findOne({
     requester: requesterId,
@@ -71,6 +78,7 @@ const countCompletedByUser = (userId) =>
 module.exports = {
   create,
   findById,
+  findByIdWithDetails,
   findActiveByRequesterAndPublication,
   updateStatusById,
   updateById,

@@ -129,7 +129,6 @@ const obtenerPorId = async (userId, exchangeId) => {
   return exchange;
 };
 
-
 const aceptarSolicitud = async (ownerId, exchangeId) => {
   const exchange = await exchangeRepository.findById(exchangeId);
   if (!exchange) throw new AppError("Solicitud no encontrada", 404);
