@@ -73,6 +73,7 @@ const register = async ({ nombre, apellido, fechaNacimiento, email, password }) 
     accessToken,
     refreshToken,
     user: {
+      id: user._id,
       _id: user._id,
       nombre: user.nombre,
       apellido: user.apellido,
@@ -129,6 +130,7 @@ const login = async ({ email, password }) => {
     refreshToken,
     reactivated,
     user: {
+      id: user._id,
       _id: user._id,
       nombre: user.nombre,
       apellido: user.apellido,
