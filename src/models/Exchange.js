@@ -5,7 +5,8 @@ const exchangeSchema = new mongoose.Schema(
     offeredPublication: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Publication",
-      required: true,
+      // Opcional: null en compras directas (type === "purchase")
+      default: null,
     },
     requestedPublication: {
       type: mongoose.Schema.Types.ObjectId,
@@ -39,6 +40,12 @@ const exchangeSchema = new mongoose.Schema(
     confirmedByOwner: {
       type: Boolean,
       default: false,
+    },
+    // "exchange" = trueque clásico, "purchase" = compra directa
+    type: {
+      type: String,
+      enum: ["exchange", "purchase"],
+      default: "exchange",
     },
   },
   { timestamps: true },
