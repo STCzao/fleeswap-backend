@@ -10,6 +10,7 @@ const {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
+  obtenerPorId,
   aceptarSolicitud,
   rechazarSolicitud,
   confirmarIntercambio,
@@ -22,6 +23,7 @@ const router = Router();
 
 router.get("/received", authenticate, listarValidator, validarCampos, obtenerRecibidas);
 router.get("/sent", authenticate, listarValidator, validarCampos, obtenerEnviadas);
+router.get("/:id", authenticate, accionSolicitudValidator, validarCampos, obtenerPorId);
 router.get("/:id/messages", authenticate, obtenerMensajesValidator, validarCampos, obtenerMensajes);
 router.patch("/:id/accept", authenticate, accionSolicitudValidator, validarCampos, aceptarSolicitud);
 router.patch("/:id/reject", authenticate, accionSolicitudValidator, validarCampos, rechazarSolicitud);
