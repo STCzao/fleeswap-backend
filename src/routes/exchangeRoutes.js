@@ -10,6 +10,7 @@ const {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
+  obtenerPorId,
   aceptarSolicitud,
   rechazarSolicitud,
   confirmarIntercambio,

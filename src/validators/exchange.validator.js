@@ -4,11 +4,19 @@ const { paginationRules } = require("./pagination.validator");
 const ESTADOS = ["pending", "active", "completed", "cancelled", "rejected"];
 
 const enviarSolicitudValidator = [
+  body("type")
+    .optional()
+    .isIn(["exchange", "purchase"])
+    .withMessage("Tipo de solicitud inválido"),
   body("offeredPublicationId")
+    .if(body("type").not().equals("purchase"))
     .notEmpty()
-    .withMessage("La publicación ofrecida es requerida")
+    .withMessage("La publicación ofrecida es requerida para intercambios")
     .isMongoId()
     .withMessage("La publicación ofrecida debe ser un ID válido"),
+  body("offeredPublicationId")
+    .if(body("type").equals("purchase"))
+    .optional(),
   body("requestedPublicationId")
     .notEmpty()
     .withMessage("La publicación solicitada es requerida")

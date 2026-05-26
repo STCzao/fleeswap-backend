@@ -30,6 +30,17 @@ const obtenerEnviadas = async (req, res, next) => {
   }
 };
 
+// GET /api/exchanges/:id
+const obtenerPorId = async (req, res, next) => {
+  try {
+    const exchange = await exchangeService.obtenerPorId(req.user._id, req.params.id);
+    res.status(200).json(exchange);
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 // PATCH /api/exchanges/:id/accept
 const aceptarSolicitud = async (req, res, next) => {
   try {
@@ -74,6 +85,7 @@ module.exports = {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
+  obtenerPorId,
   aceptarSolicitud,
   rechazarSolicitud,
   confirmarIntercambio,
