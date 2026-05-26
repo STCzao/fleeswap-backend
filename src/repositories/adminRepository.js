@@ -57,6 +57,11 @@ const suspenderPublicacion = (publicationId, session) =>
     { new: true, ...(session && { session }) },
   );
 
+const findPublicacionConOwner = (id) =>
+  Publication.findById(id)
+    .populate("owner", "nombre email")
+    .lean();
+
 const suspenderPublicacionesDisponiblesDeUsuario = (ownerId, session) =>
   Publication.updateMany(
     { owner: ownerId, status: "available" },
@@ -104,6 +109,7 @@ module.exports = {
   findReporteById,
   actualizarEstadoReporte,
   suspenderPublicacion,
+  findPublicacionConOwner,
   suspenderPublicacionesDisponiblesDeUsuario,
   listarPublicaciones,
   contarPublicaciones,

@@ -6,6 +6,7 @@ const {
   obtenerUsuarioAdminValidator,
   cambiarEstadoUsuarioValidator,
   cambiarRolUsuarioValidator,
+  listarUsuariosAdminValidator,
   listarPublicacionesAdminValidator,
   cambiarEstadoPublicacionValidator,
   eliminarPublicacionAdminValidator,
@@ -43,7 +44,14 @@ router.patch(
   validarCampos,
   resolverReporte,
 );
-router.get("/users", authenticate, validarRol("ADMIN_ROLE"), listarUsuarios);
+router.get(
+  "/users",
+  authenticate,
+  validarRol("ADMIN_ROLE"),
+  listarUsuariosAdminValidator,
+  validarCampos,
+  listarUsuarios,
+);
 router.get(
   "/users/:id",
   authenticate,
