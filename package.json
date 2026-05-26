@@ -25,6 +25,7 @@
     "cloudinary": "^2.9.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "express-mongo-sanitize": "^2.2.0",
     "express-validator": "^7.3.2",
@@ -32,11 +33,11 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.4.1",
     "resend": "^6.11.0",
+    "socket.io": "^4.8.3",
     "winston": "^3.19.0"
   },
   "devDependencies": {
     "chai": "^6.2.2",
-    "dotenv": "^16.6.1",
     "mocha": "^11.7.5",
     "nodemon": "^3.1.14",
     "serialize-javascript": "^7.0.5",

@@ -58,6 +58,12 @@ const findSentByRequester = (requesterId, statusFilter, { skip, limit }) =>
 const countSent = (requesterId, statusFilter) =>
   Exchange.countDocuments({ requester: requesterId, ...statusFilter });
 
+const countCompletedByUser = (userId) =>
+  Exchange.countDocuments({
+    status: "completed",
+    $or: [{ requester: userId }, { owner: userId }],
+  });
+
 module.exports = {
   create,
   findById,
@@ -69,4 +75,5 @@ module.exports = {
   countReceived,
   findSentByRequester,
   countSent,
+  countCompletedByUser,
 };

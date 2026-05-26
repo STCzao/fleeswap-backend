@@ -2,6 +2,8 @@ const exchangeRepository = require("../repositories/exchangeRepository");
 const publicationRepository = require("../repositories/publicationRepository");
 const { buildPagination } = require("../helpers/buildPagination");
 const AppError = require("../helpers/AppError");
+const logger = require("../helpers/logger");
+const { getIO } = require("../sockets");
 
 const enviarSolicitud = async (
   requesterId,
@@ -173,6 +175,18 @@ const confirmarIntercambio = async (userId, exchangeId) => {
 
   const updatedExchange = await exchangeRepository.updateById(exchangeId, data);
 
+  if (ambasConfirmadas) {
+    const io = getIO();
+    if (!io) {
+      logger.warn("chat:readonly no emitido - socket no inicializado", { exchangeId });
+    } else {
+      io.to(`chat:${exchangeId}`).emit("chat:readonly", {
+        exchangeId: exchangeId.toString(),
+        reason: "completed",
+      });
+    }
+  }
+
   // TODO: si status === "completed", habilitar flujo de reviews (Sprint 6).
   return updatedExchange;
 };
@@ -211,6 +225,16 @@ const cancelarIntercambio = async (userId, exchangeId) => {
       intercambioActivo: false,
     }),
   ]);
+
+  const io = getIO();
+  if (!io) {
+    logger.warn("chat:readonly no emitido - socket no inicializado", { exchangeId });
+  } else {
+    io.to(`chat:${exchangeId}`).emit("chat:readonly", {
+      exchangeId: exchangeId.toString(),
+      reason: "cancelled",
+    });
+  }
 
   return updatedExchange;
 };
