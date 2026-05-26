@@ -90,6 +90,20 @@ const obtenerEnviadas = async (requesterId, query) => {
   };
 };
 
+const obtenerPorId = async (userId, exchangeId) => {
+  const exchange = await exchangeRepository.findByIdWithDetails(exchangeId);
+  if (!exchange) throw new AppError("Solicitud no encontrada", 404);
+
+  const esRequester = exchange.requester._id.toString() === userId.toString();
+  const esOwner = exchange.owner._id.toString() === userId.toString();
+
+  if (!esRequester && !esOwner) {
+    throw new AppError("No participás en este intercambio", 403);
+  }
+
+  return exchange;
+};
+
 const aceptarSolicitud = async (ownerId, exchangeId) => {
   const exchange = await exchangeRepository.findById(exchangeId);
   if (!exchange) throw new AppError("Solicitud no encontrada", 404);
@@ -243,6 +257,7 @@ module.exports = {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
+  obtenerPorId,
   aceptarSolicitud,
   rechazarSolicitud,
   confirmarIntercambio,

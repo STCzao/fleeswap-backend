@@ -1,6 +1,7 @@
 const adminRepository = require("../repositories/adminRepository");
 const { buildPagination } = require("../helpers/buildPagination");
 const AppError = require("../helpers/AppError");
+const enviarEmail = require("../helpers/enviarEmail");
 const mongoose = require("mongoose");
 
 const USERS_PER_PAGE = 20;
@@ -181,22 +182,38 @@ const resolverReporte = async (id, action) => {
 
   if (action === "suspend_publication") {
     const session = await mongoose.startSession();
+    let reporteActualizado;
     try {
       session.startTransaction();
       await adminRepository.suspenderPublicacion(reporte.publicationId, session);
-      const reporteActualizado = await adminRepository.actualizarEstadoReporte(
+      reporteActualizado = await adminRepository.actualizarEstadoReporte(
         id,
         "reviewed",
         session,
       );
       await session.commitTransaction();
-      return reporteActualizado;
     } catch (err) {
       await session.abortTransaction();
       throw err;
     } finally {
       session.endSession();
     }
+
+    const publicacion = await adminRepository.findPublicacionConOwner(reporte.publicationId);
+    if (publicacion?.owner?.email) {
+      await enviarEmail({
+        to: publicacion.owner.email,
+        subject: "Tu publicación fue suspendida en Fleeswap",
+        html: `
+          <p>Hola ${publicacion.owner.nombre},</p>
+          <p>Tu publicación <strong>${publicacion.title}</strong> fue suspendida por nuestro equipo de moderación tras revisar un reporte.</p>
+          <p>Si creés que se trata de un error, podés contactarnos respondiendo este email.</p>
+          <p>El equipo de Fleeswap</p>
+        `,
+      });
+    }
+
+    return reporteActualizado;
   }
 
   return adminRepository.actualizarEstadoReporte(id, "dismissed");
