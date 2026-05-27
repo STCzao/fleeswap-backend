@@ -75,6 +75,27 @@ const countCompletedByUser = (userId) =>
     $or: [{ requester: userId }, { owner: userId }],
   });
 
+const countCompletedExchangesByUser = (userId) =>
+  Exchange.countDocuments({
+    status: "completed",
+    type: "exchange",
+    $or: [{ requester: userId }, { owner: userId }],
+  });
+
+const countCompletedSalesByUser = (userId) =>
+  Exchange.countDocuments({
+    status: "completed",
+    type: "purchase",
+    owner: userId,
+  });
+
+const countCompletedPurchasesByUser = (userId) =>
+  Exchange.countDocuments({
+    status: "completed",
+    type: "purchase",
+    requester: userId,
+  });
+
 module.exports = {
   create,
   findById,
@@ -88,4 +109,7 @@ module.exports = {
   findSentByRequester,
   countSent,
   countCompletedByUser,
+  countCompletedExchangesByUser,
+  countCompletedSalesByUser,
+  countCompletedPurchasesByUser,
 };
