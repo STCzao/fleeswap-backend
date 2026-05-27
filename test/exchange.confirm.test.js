@@ -156,7 +156,7 @@ describe("Exchange Confirm API", () => {
         expect(segundaConfirmacion.body).to.have.property("confirmedByOwner", true);
     });
 
-    it("al completarse → publicaciones quedan con intercambioActivo false", async () => {
+    it("al completarse → publicaciones quedan con intercambioActivo false y status 'exchanged'", async () => {
         escenario = await crearEscenarioActivo("confirm-doble-pubs");
         const { ownerData, requesterData, pubOwner, pubRequester, exchange } = escenario;
 
@@ -173,7 +173,9 @@ describe("Exchange Confirm API", () => {
         Publication.findById(pubRequester._id),
         ]);
 
+        expect(pubA.status).to.equal("exchanged");
         expect(pubA.intercambioActivo).to.equal(false);
+        expect(pubB.status).to.equal("exchanged");
         expect(pubB.intercambioActivo).to.equal(false);
     });
 

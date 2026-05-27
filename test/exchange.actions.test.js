@@ -107,7 +107,7 @@ describe("Exchange Actions API", () => {
       expect(res.body).to.have.property("_id", exchange._id);
     });
 
-    it("al aceptar → ambas publicaciones quedan unavailable", async () => {
+    it("al aceptar → ambas publicaciones siguen available pero con intercambioActivo true", async () => {
       escenario = await crearEscenario("accept-pubs");
       const { ownerData, pubOwner, pubRequester, exchange } = escenario;
 
@@ -120,8 +120,10 @@ describe("Exchange Actions API", () => {
         Publication.findById(pubRequester._id),
       ]);
 
-      expect(pubA.status).to.equal("unavailable");
-      expect(pubB.status).to.equal("unavailable");
+      expect(pubA.status).to.equal("available");
+      expect(pubA.intercambioActivo).to.equal(true);
+      expect(pubB.status).to.equal("available");
+      expect(pubB.intercambioActivo).to.equal(true);
     });
 
     it("sin token → 401", async () => {
@@ -266,7 +268,7 @@ describe("Exchange Actions API", () => {
         await User.deleteOne({ _id: u.userId });
     });
 
-    it("aceptar una solicitud → las demás solicitudes pendientes sobre la misma publicación quedan rejected", async () => {
+    it("aceptar una solicitud no rechaza las demás solicitudes pendientes, pero confirmarla (completarla) sí las rechaza", async () => {
       ownerData = await registrarUsuario({
         nombre: "Owner", apellido: "UniTest", fechaNacimiento: "2000-01-01",
         email: "owner.uni@actions.test.com", password: "Password123!", confirmPassword: "Password123!",
@@ -311,6 +313,7 @@ describe("Exchange Actions API", () => {
       exchangeA = envioA.body;
       exchangeB = envioB.body;
 
+      // Aceptar la solicitud A
       const res = await request(app)
         .patch(`/api/exchanges/${exchangeA._id}/accept`)
         .set("Authorization", `Bearer ${ownerData.token}`);
@@ -318,7 +321,24 @@ describe("Exchange Actions API", () => {
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property("status", "active");
 
-      const exchangeBActualizado = await Exchange.findById(exchangeB._id);
+      // La solicitud B debe seguir estando en pending
+      let exchangeBActualizado = await Exchange.findById(exchangeB._id);
+      expect(exchangeBActualizado.status).to.equal("pending");
+
+      // Confirmar por ambas partes la solicitud A para completarla
+      await request(app)
+        .patch(`/api/exchanges/${exchangeA._id}/confirm`)
+        .set("Authorization", `Bearer ${ownerData.token}`);
+
+      await request(app)
+        .patch(`/api/exchanges/${exchangeA._id}/confirm`)
+        .set("Authorization", `Bearer ${requesterAData.token}`);
+
+      const exchangeACompletado = await Exchange.findById(exchangeA._id);
+      expect(exchangeACompletado.status).to.equal("completed");
+
+      // Ahora que la solicitud A está completed, la solicitud B debe haber sido rechazada
+      exchangeBActualizado = await Exchange.findById(exchangeB._id);
       expect(exchangeBActualizado.status).to.equal("rejected");
     });
 
