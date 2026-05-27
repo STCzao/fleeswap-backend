@@ -36,9 +36,11 @@ const actualizarPerfil = async (userId, { photo, bio, location }) => {
 
 // Retorna el perfil propio del usuario autenticado: incluye datos privados como email e isVerified.
 const obtenerPerfil = async (userId) => {
-  const [user, intercambiosCompletados] = await Promise.all([
+  const [user, intercambiosCompletados, comprasCompletadas, ventasCompletadas] = await Promise.all([
     userRepository.findById(userId),
-    exchangeRepository.countCompletedByUser(userId),
+    exchangeRepository.countCompletedExchangesByUser(userId),
+    exchangeRepository.countCompletedPurchasesByUser(userId),
+    exchangeRepository.countCompletedSalesByUser(userId),
   ]);
   if (!user) throw new AppError("Usuario no encontrado", 404);
 
@@ -53,13 +55,17 @@ const obtenerPerfil = async (userId) => {
     isVerified: user.isVerified,
     profileComplete: user.profileComplete,
     intercambiosCompletados,
+    comprasCompletadas,
+    ventasCompletadas,
   };
 };
 
 const obtenerPerfilPublico = async (userId) => {
-  const [user, intercambiosCompletados] = await Promise.all([
+  const [user, intercambiosCompletados, comprasCompletadas, ventasCompletadas] = await Promise.all([
     userRepository.findPublicById(userId),
-    exchangeRepository.countCompletedByUser(userId),
+    exchangeRepository.countCompletedExchangesByUser(userId),
+    exchangeRepository.countCompletedPurchasesByUser(userId),
+    exchangeRepository.countCompletedSalesByUser(userId),
   ]);
   if (!user) throw new AppError("Usuario no encontrado", 404);
 
@@ -73,6 +79,8 @@ const obtenerPerfilPublico = async (userId) => {
     miembroDesde: user.createdAt,
     calificacionPromedio: 0,
     intercambiosCompletados,
+    comprasCompletadas,
+    ventasCompletadas,
     publicaciones: [],
   };
 };
