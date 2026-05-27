@@ -70,7 +70,7 @@ const publicationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["available", "unavailable", "suspended"],
+      enum: ["available", "unavailable", "suspended", "sold", "exchanged"],
       default: "available",
     },
     reportCount: {

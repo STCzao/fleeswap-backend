@@ -5,10 +5,14 @@ const logger = require("../helpers/logger");
 
 const MAX_MESSAGE_LENGTH = 1000;
 
-const getParticipantIds = (exchange) => [
-  (exchange.requester._id || exchange.requester).toString(),
-  exchange.owner.toString(),
-];
+const getParticipantIds = (exchange) => {
+  const reqId = exchange.requester?._id || exchange.requester;
+  const ownerId = exchange.owner?._id || exchange.owner;
+  const ids = [];
+  if (reqId) ids.push(reqId.toString());
+  if (ownerId) ids.push(ownerId.toString());
+  return ids;
+};
 
 const esParticipante = (exchange, userId) =>
   getParticipantIds(exchange).includes(userId.toString());
