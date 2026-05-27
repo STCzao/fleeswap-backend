@@ -26,6 +26,8 @@ const initSocket = (httpServer) => {
 
   io.use(async (socket, next) => {
     try {
+      // El token viaja en handshake.auth y no en cookies porque Socket.IO
+      // no tiene acceso confiable a las cookies httpOnly en todos los transportes.
       const token = socket.handshake.auth?.token;
 
       if (!token) {

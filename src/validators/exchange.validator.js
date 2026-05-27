@@ -8,6 +8,8 @@ const enviarSolicitudValidator = [
     .optional()
     .isIn(["exchange", "purchase"])
     .withMessage("Tipo de solicitud inválido"),
+  // offeredPublicationId es obligatorio para intercambios y opcional para compras directas.
+  // Se usan dos reglas separadas porque express-validator no soporta if/else en una sola cadena.
   body("offeredPublicationId")
     .if(body("type").not().equals("purchase"))
     .notEmpty()

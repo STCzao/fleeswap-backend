@@ -22,6 +22,8 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// Índice compuesto para paginación cursor-based: filtra por exchangeId y ordena/filtra por _id
+// en una sola pasada de índice, evitando un collection scan en chats con muchos mensajes.
 messageSchema.index({ exchangeId: 1, _id: -1 });
 
 module.exports = mongoose.model("Message", messageSchema);

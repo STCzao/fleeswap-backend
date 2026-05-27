@@ -94,6 +94,7 @@ const editarValidator = [
   body("photos.*").isURL().withMessage("Cada foto debe ser una URL válida"),
 ];
 
+// "suspended" se excluye intencionalmente: solo el admin puede suspender publicaciones.
 const cambiarEstadoValidator = [
   body("status")
     .isIn(["available", "unavailable"])
