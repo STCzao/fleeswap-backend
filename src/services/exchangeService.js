@@ -142,30 +142,20 @@ const aceptarSolicitud = async (ownerId, exchangeId) => {
   const requestedPublicationId = exchange.requestedPublication._id;
 
   if (exchange.type === "purchase") {
-    // Compra: solo bloquear la publicación solicitada
-    await Promise.all([
-      publicationRepository.updateById(requestedPublicationId, {
-        status: "unavailable",
-        intercambioActivo: true,
-      }),
-      exchangeRepository.rejectPendingByPublications([requestedPublicationId], exchangeId),
-    ]);
+    // Compra: marcar intercambio activo en la publicación solicitada, manteniéndola disponible
+    await publicationRepository.updateById(requestedPublicationId, {
+      intercambioActivo: true,
+    });
   } else {
-    // Intercambio: bloquear ambas publicaciones
+    // Intercambio: marcar intercambio activo en ambas publicaciones, manteniéndolas disponibles
     const offeredPublicationId = exchange.offeredPublication._id;
     await Promise.all([
       publicationRepository.updateById(offeredPublicationId, {
-        status: "unavailable",
         intercambioActivo: true,
       }),
       publicationRepository.updateById(requestedPublicationId, {
-        status: "unavailable",
         intercambioActivo: true,
       }),
-      exchangeRepository.rejectPendingByPublications(
-        [offeredPublicationId, requestedPublicationId],
-        exchangeId,
-      ),
     ]);
   }
 
@@ -208,10 +198,13 @@ const confirmarIntercambio = async (userId, exchangeId) => {
     if (!esOwner) throw new AppError("Solo el vendedor puede confirmar la venta", 403);
     if (exchange.confirmedByOwner) throw new AppError("Ya confirmaste esta venta", 400);
 
-    await publicationRepository.updateById(exchange.requestedPublication._id, {
-      status: "sold",
-      intercambioActivo: false,
-    });
+    await Promise.all([
+      publicationRepository.updateById(exchange.requestedPublication._id, {
+        status: "sold",
+        intercambioActivo: false,
+      }),
+      exchangeRepository.rejectPendingByPublications([exchange.requestedPublication._id], exchangeId),
+    ]);
 
     const updatedExchange = await exchangeRepository.updateById(exchangeId, {
       confirmedByOwner: true,
@@ -255,6 +248,10 @@ const confirmarIntercambio = async (userId, exchangeId) => {
         status: "exchanged",
         intercambioActivo: false,
       }),
+      exchangeRepository.rejectPendingByPublications(
+        [exchange.offeredPublication._id, exchange.requestedPublication._id],
+        exchangeId,
+      ),
     ]);
   }
 
