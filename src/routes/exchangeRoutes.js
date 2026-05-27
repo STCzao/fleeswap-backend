@@ -35,6 +35,7 @@ router.patch(
   validarCampos,
   cancelarIntercambio,
 );
+// POST "/" va al final para que Express no lo confunda con una ruta /:id al parsear.
 router.post("/", authenticate, enviarSolicitudValidator, validarCampos, enviarSolicitud);
 
 module.exports = router;

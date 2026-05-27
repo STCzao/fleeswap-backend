@@ -30,6 +30,9 @@ const updateStatusById = (id, status) =>
 const updateById = (id, data) =>
   Exchange.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 
+// Al completarse un intercambio, rechaza automáticamente todas las solicitudes pendientes
+// que involucren cualquiera de las publicaciones participantes, para evitar intercambios
+// simultáneos sobre el mismo objeto. Excluye el propio intercambio que se está completando.
 const rejectPendingByPublications = (publicationIds, excludeId) =>
   Exchange.updateMany(
     {

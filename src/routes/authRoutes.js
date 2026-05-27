@@ -7,6 +7,8 @@ const { register, login, refresh, logout, cambiarPassword, forgotPassword, reset
 
 const router = Router();
 
+// validarMayorDeEdad corre después de validarCampos para garantizar que fechaNacimiento
+// ya fue validado como fecha válida antes de calcular la edad.
 router.post("/register", registerValidator, validarCampos, validarMayorDeEdad, register);
 router.post("/login", loginValidator, validarCampos, login);
 router.post("/refresh", refresh);

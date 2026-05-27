@@ -5,6 +5,8 @@ const { buildPagination } = require("../helpers/buildPagination");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
 const AppError = require("../helpers/AppError");
 
+// A partir de este número de reportes la publicación se suspende automáticamente,
+// sin intervención del admin. El admin puede reactivarla manualmente si lo considera necesario.
 const REPORT_THRESHOLD = 5;
 
 const crear = async (
