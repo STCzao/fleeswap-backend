@@ -111,6 +111,9 @@ const registerChatHandlers = (io, socket) => {
       });
       await message.populate("senderId", "nombre apellido photo");
 
+      // Actualizar updatedAt del exchange para que el sidebar ordene por actividad
+      await exchangeRepository.updateById(exchangeId, { updatedAt: new Date() });
+
       const payload = mapMessagePayload(message, message.senderId);
 
       io.to(`chat:${exchangeId}`).emit("chat:message", payload);
