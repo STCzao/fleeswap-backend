@@ -25,10 +25,10 @@ const findActiveByRequesterAndPublication = (requesterId, requestedPublicationId
   });
 
 const updateStatusById = (id, status) =>
-  Exchange.findByIdAndUpdate(id, { status }, { new: true });
+  Exchange.findByIdAndUpdate(id, { status }, { returnDocument: "after" });
 
 const updateById = (id, data) =>
-  Exchange.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+  Exchange.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true });
 
 // Al completarse un intercambio, rechaza automáticamente todas las solicitudes pendientes
 // que involucren cualquiera de las publicaciones participantes, para evitar intercambios

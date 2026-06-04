@@ -25,7 +25,7 @@ const actualizarUsuarioById = (id, data, session) =>
   User.findOneAndUpdate(
     { _id: id, isActive: { $exists: true } },
     data,
-    { new: true, runValidators: true, ...(session && { session }) },
+    { returnDocument: "after", runValidators: true, ...(session && { session }) },
   )
     .select("nombre apellido email role isActive createdAt bio location photo isVerified")
     .lean();
@@ -47,7 +47,7 @@ const actualizarEstadoReporte = (id, status, session) =>
   Report.findByIdAndUpdate(
     id,
     { status },
-    { new: true, ...(session && { session }) },
+    { returnDocument: "after", ...(session && { session }) },
   )
     .populate("publicationId", "title status reportCount owner photos")
     .populate("reporterId", "nombre apellido email photo");
@@ -56,7 +56,7 @@ const suspenderPublicacion = (publicationId, session) =>
   Publication.findByIdAndUpdate(
     publicationId,
     { status: "suspended" },
-    { new: true, ...(session && { session }) },
+    { returnDocument: "after", ...(session && { session }) },
   );
 
 const findPublicacionConOwner = (id) =>
@@ -84,7 +84,7 @@ const listarPublicaciones = (filtro, skip, limit) =>
 const contarPublicaciones = (filtro) => Publication.countDocuments(filtro);
 
 const actualizarPublicacionById = (id, data) =>
-  Publication.findByIdAndUpdate(id, data, { new: true, runValidators: true })
+  Publication.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true })
     .populate("owner", "nombre apellido email");
 
 const eliminarPublicacionById = (id, session) =>

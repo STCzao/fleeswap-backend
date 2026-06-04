@@ -13,11 +13,6 @@ const obtenerMensajes = async (userId, exchangeId, { before, limit }) => {
   const { limit: resolvedLimit } = buildPagination({ limit }, 20);
   const exchange = await exchangeRepository.findById(exchangeId);
 
-  // TODO: eliminar una vez identificada la causa del bug de pertenencia al intercambio
-  console.warn("[DEBUG messages] exchangeId:", exchangeId, typeof exchangeId);
-  console.warn("[DEBUG messages] userId:", userId?.toString(), typeof userId);
-  console.warn("[DEBUG messages] exchange found:", !!exchange);
-
   if (!exchange) throw new AppError("Solicitud no encontrada", 404);
 
   const requesterId = exchange.requester?._id?.toString() || exchange.requester?.toString();

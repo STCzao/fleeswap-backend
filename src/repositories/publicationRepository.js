@@ -26,10 +26,10 @@ const findByOwner = (ownerId) =>
     .sort({ createdAt: -1 });
 
 const updateById = (id, data) =>
-  Publication.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+  Publication.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true });
 
 const incrementReportCount = (id) =>
-  Publication.findByIdAndUpdate(id, { $inc: { reportCount: 1 } }, { new: true });
+  Publication.findByIdAndUpdate(id, { $inc: { reportCount: 1 } }, { returnDocument: "after" });
 
 const deleteById = (id) => Publication.findByIdAndDelete(id);
 

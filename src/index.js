@@ -3,6 +3,7 @@ const http = require("http");
 const app = require("./app");
 const connectDB = require("./config/db");
 const { initSocket } = require("./sockets");
+const logger = require("./helpers/logger");
 
 const PORT = process.env.PORT || 3000;
 
@@ -13,7 +14,7 @@ const start = async () => {
   initSocket(httpServer);
 
   httpServer.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
+    logger.info(`Servidor corriendo en puerto ${PORT}`);
   });
 };
 
