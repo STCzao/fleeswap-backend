@@ -29,6 +29,8 @@ const mapMessagePayload = (message, sender) => ({
   createdAt: message.createdAt,
 });
 
+// Wrapper para acknowledgements opcionales de Socket.IO: el cliente puede omitir el callback
+// y el servidor no falla. Permite usar el mismo handler con y sin confirmación del cliente.
 const withAck = (ack, payload) => {
   if (typeof ack === "function") {
     ack(payload);
@@ -56,6 +58,8 @@ const registerChatHandlers = (io, socket) => {
         return withAck(ack, { ok: false, error: "No autorizado" });
       }
 
+      // Solo intercambios "active" pueden unirse al chat en tiempo real.
+      // Completed/cancelled se leen via REST (GET /:id/messages), no via socket.
       if (exchange.status !== "active") {
         return withAck(ack, { ok: false, error: "El chat no está disponible" });
       }
@@ -110,6 +114,9 @@ const registerChatHandlers = (io, socket) => {
         content: normalizedContent,
       });
       await message.populate("senderId", "nombre apellido photo");
+
+      // Actualizar updatedAt del exchange para que el sidebar ordene por actividad
+      await exchangeRepository.updateById(exchangeId, { updatedAt: new Date() });
 
       const payload = mapMessagePayload(message, message.senderId);
 

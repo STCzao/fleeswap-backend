@@ -30,6 +30,9 @@ const updateStatusById = (id, status) =>
 const updateById = (id, data) =>
   Exchange.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true });
 
+// Al completarse un intercambio, rechaza automáticamente todas las solicitudes pendientes
+// que involucren cualquiera de las publicaciones participantes, para evitar intercambios
+// simultáneos sobre el mismo objeto. Excluye el propio intercambio que se está completando.
 const rejectPendingByPublications = (publicationIds, excludeId) =>
   Exchange.updateMany(
     {
@@ -75,6 +78,27 @@ const countCompletedByUser = (userId) =>
     $or: [{ requester: userId }, { owner: userId }],
   });
 
+const countCompletedExchangesByUser = (userId) =>
+  Exchange.countDocuments({
+    status: "completed",
+    type: "exchange",
+    $or: [{ requester: userId }, { owner: userId }],
+  });
+
+const countCompletedSalesByUser = (userId) =>
+  Exchange.countDocuments({
+    status: "completed",
+    type: "purchase",
+    owner: userId,
+  });
+
+const countCompletedPurchasesByUser = (userId) =>
+  Exchange.countDocuments({
+    status: "completed",
+    type: "purchase",
+    requester: userId,
+  });
+
 module.exports = {
   create,
   findById,
@@ -88,4 +112,7 @@ module.exports = {
   findSentByRequester,
   countSent,
   countCompletedByUser,
+  countCompletedExchangesByUser,
+  countCompletedSalesByUser,
+  countCompletedPurchasesByUser,
 };

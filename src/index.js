@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 const start = async () => {
   await connectDB();
+  // Socket.IO requiere un servidor HTTP nativo; no puede adjuntarse directamente a la app Express.
   const httpServer = http.createServer(app);
   initSocket(httpServer);
 

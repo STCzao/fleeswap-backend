@@ -33,6 +33,8 @@ const exchangeSchema = new mongoose.Schema(
       default: 0,
       min: [0, "El monto complementario no puede ser negativo"],
     },
+    // Patrón de doble confirmación: el intercambio se completa solo cuando ambas partes confirman.
+    // El service verifica que ambos flags sean true antes de pasar el status a "completed".
     confirmedByRequester: {
       type: Boolean,
       default: false,

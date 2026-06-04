@@ -3,6 +3,9 @@ const messageRepository = require("../repositories/messageRepository");
 const { buildPagination } = require("../helpers/buildPagination");
 const AppError = require("../helpers/AppError");
 
+// El chat está disponible solo para intercambios que ya tuvieron contacto real entre las partes.
+// "pending" y "rejected" se bloquean porque el intercambio nunca llegó a concretarse.
+// "completed" y "cancelled" se permiten para preservar el historial de mensajes.
 const BLOQUEADOS = ["pending", "rejected"];
 const PERMITIDOS = ["active", "completed", "cancelled"];
 

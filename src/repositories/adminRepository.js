@@ -14,6 +14,8 @@ const listarUsuarios = (filtro, skip, limit) =>
 
 const contarUsuarios = (filtro) => User.countDocuments(filtro);
 
+// `isActive: { $exists: true }` asegura que solo se operen usuarios del modelo actual.
+// Documentos legacy sin el campo quedan fuera del scope del panel de admin.
 const findUsuarioById = (id) =>
   User.findOne({ _id: id, isActive: { $exists: true } })
     .select("nombre apellido email role isActive createdAt bio location photo isVerified")
@@ -62,6 +64,8 @@ const findPublicacionConOwner = (id) =>
     .populate("owner", "nombre email")
     .lean();
 
+// Solo suspende las publicaciones "available": las que ya están "unavailable" o "suspended"
+// no se tocan para no perder su estado original si el usuario fuese reactivado más adelante.
 const suspenderPublicacionesDisponiblesDeUsuario = (ownerId, session) =>
   Publication.updateMany(
     { owner: ownerId, status: "available" },
