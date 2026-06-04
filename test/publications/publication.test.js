@@ -1,9 +1,9 @@
 const request = require("supertest");
 const { expect } = require("chai");
 const mongoose = require("mongoose");
-const app = require("../src/app");
-const User = require("../src/models/User");
-const Publication = require("../src/models/Publication");
+const app = require("../../src/app");
+const User = require("../../src/models/User");
+const Publication = require("../../src/models/Publication");
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

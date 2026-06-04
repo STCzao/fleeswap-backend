@@ -20,10 +20,10 @@ const findByIdConRefreshToken = (id) => User.findById(id).select("+refreshToken"
 const create = (data) => User.create(data);
 
 // Actualiza los campos de perfil de un usuario por id.
-// { new: true } retorna el documento actualizado en lugar del anterior.
+// returnDocument:"after" retorna el documento actualizado en lugar del anterior.
 // runValidators aplica las validaciones del schema de Mongoose al actualizar.
 const updatePerfil = (id, data) =>
-  User.findByIdAndUpdate(id, data, { new: true, runValidators: true }).lean({ virtuals: true });
+  User.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true }).lean({ virtuals: true });
 
 // Retorna campos públicos de un usuario por id — excluye datos sensibles.
 // Reutilizable en el perfil público sin autenticación.
@@ -50,14 +50,30 @@ const actualizarPassword = (id, password) =>
 const actualizarResetToken = (id, resetToken, resetTokenExpiry) =>
   User.findByIdAndUpdate(id, { resetToken, resetTokenExpiry });
 
+const actualizarVerificationToken = (id, verificationToken, verificationTokenExpiry) =>
+  User.findByIdAndUpdate(id, { verificationToken, verificationTokenExpiry });
+
 // Busca un usuario por el hash del reset token y verifica que no haya expirado.
 // Incluye +resetToken para poder validar la coincidencia.
 const findByResetToken = (resetTokenHash) =>
   User.findOne({ resetToken: resetTokenHash, resetTokenExpiry: { $gt: new Date() } }).select("+resetToken");
 
+const findByVerificationToken = (verificationTokenHash) =>
+  User.findOne({
+    verificationToken: verificationTokenHash,
+    verificationTokenExpiry: { $gt: new Date() },
+  }).select("+verificationToken");
+
 // Limpia el reset token después de un reset exitoso — invalida el link.
 const limpiarResetToken = (id) =>
   User.findByIdAndUpdate(id, { resetToken: null, resetTokenExpiry: null });
+
+const limpiarVerificationToken = (id) =>
+  User.findByIdAndUpdate(id, {
+    isVerified: true,
+    verificationToken: null,
+    verificationTokenExpiry: null,
+  });
 
 // Marca un usuario como eliminado (soft-delete) — no borra el documento.
 // El query middleware filtrará este usuario de todas las queries normales.
@@ -75,4 +91,28 @@ const reactivarCuenta = (id) =>
 const findByEmailIncluyendoInactivos = (email) =>
   User.findOne({ email, isActive: { $exists: true } }).select("+password");
 
-module.exports = { findByEmail, findByEmailConPassword, findById, findByIdConRefreshToken, findByIdConPassword, create, updatePerfil, findPublicById, actualizarRefreshToken, revocarRefreshToken, actualizarPassword, actualizarResetToken, findByResetToken, limpiarResetToken, softDelete, reactivarCuenta, findByEmailIncluyendoInactivos };
+const findByIdConVerificationToken = (id) =>
+  User.findById(id).select("+verificationToken");
+module.exports = {
+  findByEmail,
+  findByEmailConPassword,
+  findById,
+  findByIdConRefreshToken,
+  findByIdConPassword,
+  findByIdConVerificationToken,
+  create,
+  updatePerfil,
+  findPublicById,
+  actualizarRefreshToken,
+  revocarRefreshToken,
+  actualizarPassword,
+  actualizarResetToken,
+  actualizarVerificationToken,
+  findByResetToken,
+  findByVerificationToken,
+  limpiarResetToken,
+  limpiarVerificationToken,
+  softDelete,
+  reactivarCuenta,
+  findByEmailIncluyendoInactivos,
+};

@@ -3,10 +3,10 @@
 const request    = require("supertest");
 const { expect } = require("chai");
 const mongoose   = require("mongoose");
-const app        = require("../src/app");
-const User        = require("../src/models/User");
-const Publication = require("../src/models/Publication");
-const { generateAccessToken } = require("../src/helpers/generateToken");
+const app        = require("../../src/app");
+const User        = require("../../src/models/User");
+const Publication = require("../../src/models/Publication");
+const { generateAccessToken } = require("../../src/helpers/generateToken");
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -261,7 +261,7 @@ describe("Profile Publications API", () => {
       expect(res.body).to.have.property("status").that.equals("pending");
 
       // Limpieza del exchange creado
-      const Exchange = require("../src/models/Exchange");
+      const Exchange = require("../../src/models/Exchange");
       await Exchange.deleteOne({ _id: res.body._id });
     });
 

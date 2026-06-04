@@ -130,4 +130,18 @@ const resetPasswordValidator = [
     }),
 ];
 
-module.exports = { registerValidator, loginValidator, changePasswordValidator, forgotPasswordValidator, resetPasswordValidator };
+const verifyEmailValidator = [
+  body("token")
+    .exists({ checkFalsy: true }).withMessage("El token es requerido")
+    .isHexadecimal().withMessage("Token invalido")
+    .isLength({ min: 64, max: 64 }).withMessage("Token invalido"),
+];
+
+module.exports = {
+  registerValidator,
+  loginValidator,
+  changePasswordValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+  verifyEmailValidator,
+};
