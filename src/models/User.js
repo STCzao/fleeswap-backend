@@ -1,6 +1,19 @@
 const mongoose = require("mongoose");
 const LOCALIDADES_TUCUMAN = require("../helpers/localidadesTucuman");
 
+const PREFERRED_CATEGORIES = [
+  "electronica",
+  "ropa_accesorios",
+  "coleccionables",
+  "libros_comics",
+  "deportes",
+  "hogar_deco",
+  "juguetes",
+  "arte",
+  "musica",
+  "otros",
+];
+
 // Modelo de usuario de la plataforma.
 // password y resetToken tienen select:false para nunca exponerse en queries por defecto.
 // photo almacena la URL publica de Cloudinary.
@@ -65,6 +78,14 @@ const userSchema = new mongoose.Schema(
       enum: {
         values: [null, ...LOCALIDADES_TUCUMAN],
         message: "La localidad seleccionada no es valida",
+      },
+    },
+    preferredCategories: {
+      type: [String],
+      default: [],
+      enum: {
+        values: PREFERRED_CATEGORIES,
+        message: "La categoria preferida no es valida",
       },
     },
     isVerified: {

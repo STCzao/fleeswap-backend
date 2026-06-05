@@ -1,6 +1,19 @@
 const { body } = require("express-validator");
 const LOCALIDADES_TUCUMAN = require("../helpers/localidadesTucuman");
 
+const PREFERRED_CATEGORIES = [
+  "electronica",
+  "ropa_accesorios",
+  "coleccionables",
+  "libros_comics",
+  "deportes",
+  "hogar_deco",
+  "juguetes",
+  "arte",
+  "musica",
+  "otros",
+];
+
 // Validaciones para la actualizacion del perfil de usuario.
 // Todos los campos son opcionales: el usuario puede actualizar uno o varios a la vez.
 // La URL de foto debe pertenecer estrictamente a la cuenta de Cloudinary configurada,
@@ -26,6 +39,16 @@ const actualizarPerfilValidator = [
   body("location")
     .optional()
     .isIn(LOCALIDADES_TUCUMAN).withMessage("La localidad seleccionada no es valida"),
+
+  body("preferredCategories")
+    .optional()
+    .isArray({ max: PREFERRED_CATEGORIES.length })
+    .withMessage("Las categorias preferidas deben enviarse como array"),
+
+  body("preferredCategories.*")
+    .optional()
+    .isIn(PREFERRED_CATEGORIES)
+    .withMessage("La categoria preferida no es valida"),
 ];
 
 // Validacion para eliminar cuenta: requiere la contrasena como confirmacion de identidad.

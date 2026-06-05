@@ -18,7 +18,13 @@ const errorHandler = (err, req, res, next) => {
 
   if (err.name === "MongoServerError" && err.code === 11000) {
     logger.warn(`[${req.method}] ${req.path} - 409: duplicate key`, meta);
-    return res.status(409).json({ message: "El email ya esta registrado" });
+    if (err.keyPattern?.email) {
+      return res.status(409).json({ message: "El email ya esta registrado" });
+    }
+    if (err.keyPattern?.user && err.keyPattern?.criteriaSignature) {
+      return res.status(409).json({ message: "Ya existe un criterio de busqueda igual" });
+    }
+    return res.status(409).json({ message: "Recurso duplicado" });
   }
 
   if (err.name === "CastError" && err.kind === "ObjectId") {
