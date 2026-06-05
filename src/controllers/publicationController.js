@@ -1,4 +1,5 @@
 const publicationService = require("../services/publicationService");
+const userService = require("../services/userService");
 
 // POST /api/publications
 // El ownership queda implícito en req.user._id; el usuario solo puede crear publicaciones propias.
@@ -68,6 +69,18 @@ const listar = async (req, res, next) => {
   }
 };
 
+// GET /api/publications/recommendations
+// Usa las categorias preferidas del usuario autenticado para devolver sugerencias para Home.
+const recomendar = async (req, res, next) => {
+  try {
+    const limit = req.query.limit;
+    const result = await userService.obtenerRecomendaciones(req.user._id, limit);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // POST /api/publications/:id/report
 // 201 porque se crea un recurso Report, aunque no se devuelve en la respuesta.
 const reportar = async (req, res, next) => {
@@ -84,4 +97,13 @@ const reportar = async (req, res, next) => {
   }
 };
 
-module.exports = { crear, editar, eliminar, cambiarEstado, verDetalle, listar, reportar };
+module.exports = {
+  crear,
+  editar,
+  eliminar,
+  cambiarEstado,
+  verDetalle,
+  listar,
+  recomendar,
+  reportar,
+};

@@ -25,6 +25,17 @@ const findByOwner = (ownerId) =>
     .select("title photos type status createdAt")
     .sort({ createdAt: -1 });
 
+const findRecommendedByCategories = (ownerId, categories, limit) =>
+  Publication.find({
+    owner: { $ne: ownerId },
+    status: "available",
+    category: { $in: categories },
+  })
+    .select("title photos type category condition status owner createdAt")
+    .populate("owner", "nombre apellido location")
+    .sort({ createdAt: -1 })
+    .limit(limit);
+
 const updateById = (id, data) =>
   Publication.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true });
 
@@ -39,6 +50,7 @@ module.exports = {
   findAll,
   countAll,
   findByOwner,
+  findRecommendedByCategories,
   updateById,
   incrementReportCount,
   deleteById,

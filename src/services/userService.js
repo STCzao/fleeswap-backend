@@ -3,18 +3,20 @@ const exchangeRepository = require("../repositories/exchangeRepository");
 const publicationRepository = require("../repositories/publicationRepository");
 const bcrypt = require("bcrypt");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
+const { buildPagination } = require("../helpers/buildPagination");
 const AppError = require("../helpers/AppError");
 
 // Actualiza los campos de perfil del usuario autenticado.
-// Solo permite modificar photo, bio y location: nunca campos sensibles como email, password o role.
+// Solo permite modificar photo, bio, location y preferredCategories: nunca campos sensibles como email, password o role.
 // Sanitiza bio contra XSS antes de persistir.
 // La URL de photo ya fue validada en el validator contra el cloud_name de Cloudinary.
 // location proviene de un enum controlado, no de texto libre.
-const actualizarPerfil = async (userId, { photo, bio, location }) => {
+const actualizarPerfil = async (userId, { photo, bio, location, preferredCategories }) => {
   const data = {};
   if (photo !== undefined) data.photo = photo;
   if (bio !== undefined) data.bio = sanitizarTexto(bio);
   if (location !== undefined) data.location = location;
+  if (preferredCategories !== undefined) data.preferredCategories = preferredCategories;
 
   if (Object.keys(data).length === 0) throw new AppError("Solicitud invalida", 400);
 
@@ -29,6 +31,7 @@ const actualizarPerfil = async (userId, { photo, bio, location }) => {
     photo: user.photo,
     bio: user.bio,
     location: user.location,
+    preferredCategories: user.preferredCategories,
     isVerified: user.isVerified,
     profileComplete: user.profileComplete,
   };
@@ -52,6 +55,7 @@ const obtenerPerfil = async (userId) => {
     photo: user.photo,
     bio: user.bio,
     location: user.location,
+    preferredCategories: user.preferredCategories,
     isVerified: user.isVerified,
     profileComplete: user.profileComplete,
     intercambiosCompletados,
@@ -104,4 +108,36 @@ const eliminarCuenta = async (userId, password) => {
 // A diferencia del listado publico, el owner necesita ver sus publicaciones pausadas para gestionarlas.
 const obtenerMisPublicaciones = (userId) => publicationRepository.findByOwner(userId);
 
-module.exports = { obtenerPerfil, obtenerPerfilPublico, actualizarPerfil, eliminarCuenta, obtenerMisPublicaciones };
+const obtenerRecomendaciones = async (userId, limit = 10) => {
+  const user = await userRepository.findById(userId);
+  if (!user) throw new AppError("Usuario no encontrado", 404);
+  const { limit: resolvedLimit } = buildPagination({ limit }, 10);
+
+  const preferredCategories = user.preferredCategories || [];
+  if (preferredCategories.length === 0) {
+    return {
+      publications: [],
+      basedOnCategories: [],
+    };
+  }
+
+  const publications = await publicationRepository.findRecommendedByCategories(
+    userId,
+    preferredCategories,
+    resolvedLimit,
+  );
+
+  return {
+    publications,
+    basedOnCategories: preferredCategories,
+  };
+};
+
+module.exports = {
+  obtenerPerfil,
+  obtenerPerfilPublico,
+  actualizarPerfil,
+  eliminarCuenta,
+  obtenerMisPublicaciones,
+  obtenerRecomendaciones,
+};

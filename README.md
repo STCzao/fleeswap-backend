@@ -2,7 +2,7 @@
 
 Backend de Fleeswap, una plataforma orientada a publicaciones de objetos, trueques entre usuarios, compras directas, mensajeria contextual y moderacion administrativa.
 
-Fecha de esta documentacion: 3 de junio de 2026.
+Fecha de esta documentacion: 5 de junio de 2026.
 
 ## Resumen Ejecutivo
 
@@ -66,7 +66,8 @@ Fleeswap busca resolver un flujo de intercambio y/o venta de objetos entre perso
 
 - Perfil publico completo: hoy devuelve datos basicos e intercambios completados, pero no expone todavia publicaciones activas del usuario ni una reputacion real.
 - Sistema de reputacion: no existe aun el flujo de calificaciones, comentarios ni promedio real post-intercambio.
-- Busqueda activa y notificaciones: no existen aun modelos, rutas, matching automatico ni centro de notificaciones.
+- Preferencias de categorias y recomendaciones para Home: implementadas como HU complementaria de descubrimiento dentro de la Epica 5.
+- Busqueda activa y notificaciones persistentes: existe ya la base de `H5.1` para crear criterios, pero siguen pendientes matching automatico, persistencia de notificaciones y centro de notificaciones.
 - Suite de tests: existe una base amplia y funcional, pero sigue dependiendo de un entorno externo y tiene tiempos de corrida altos.
 - Observabilidad y endurecimiento operativo: existe trazabilidad basica, pero no todavia una estrategia completa de metricas, alertas y auditoria.
 
@@ -78,7 +79,7 @@ Tomando como referencia el Product Backlog MVP, el backend actual se alinea de e
 - Epica 2 - Gestion de Publicaciones: alineacion alta.
 - Epica 3 - Sistema de Intercambio: alineacion alta.
 - Epica 4 - Chat en Tiempo Real: alineacion alta.
-- Epica 5 - Busqueda Activa y Notificaciones: pendiente de desarrollo.
+- Epica 5 - Busqueda Activa y Notificaciones: implementacion inicial.
 - Epica 6 - Sistema de Reputacion: implementacion parcial.
 
 ### Detalle por epica
@@ -148,11 +149,19 @@ Observacion:
 
 Estado actual:
 
-- no implementada en backend.
+- implementacion inicial en backend.
 
 Lo observado en el codigo:
 
-- existen referencias comentadas a futuras rutas de `wishlist` y `notifications`, pero no hay modelos, servicios, repositorios, rutas, eventos socket ni tests activos para esta epica.
+- ya existe una HU complementaria de descubrimiento basada en `preferredCategories` del usuario y `GET /api/publications/recommendations`.
+- esa HU cubre sugerencias personalizadas para el carrusel del Home, pero no reemplaza la busqueda activa definida en backlog.
+- siguen pendientes la entidad de busqueda activa, su gestion completa, el matching automatico por coincidencia, las notificaciones persistentes y los eventos de producto en tiempo real.
+
+Lectura funcional sugerida:
+
+- descubrimiento por preferencias de categorias;
+- busqueda activa como interes puntual persistente;
+- notificacion por coincidencia como consecuencia automatica de esa busqueda activa.
 
 #### Epica 6 - Sistema de Reputacion
 
@@ -268,12 +277,18 @@ La base de seguridad actual incluye:
 ### Publications
 
 - `GET /api/publications`
+- `GET /api/publications/recommendations`
 - `GET /api/publications/:id`
 - `POST /api/publications`
 - `PATCH /api/publications/:id`
 - `DELETE /api/publications/:id`
 - `PATCH /api/publications/:id/status`
 - `POST /api/publications/:id/report`
+
+### Active Searches
+
+- `GET /api/active-searches`
+- `POST /api/active-searches`
 
 ### Exchanges
 
