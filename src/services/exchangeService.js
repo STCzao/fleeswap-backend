@@ -1,38 +1,51 @@
 const exchangeRepository = require("../repositories/exchangeRepository");
 const publicationRepository = require("../repositories/publicationRepository");
+const userRepository = require("../repositories/userRepository");
+const notificationService = require("./notificationService");
 const { buildPagination } = require("../helpers/buildPagination");
 const AppError = require("../helpers/AppError");
 const logger = require("../helpers/logger");
 const { getIO } = require("../sockets");
 
-// ── Crear solicitud de INTERCAMBIO o COMPRA ──────────────────────────────────
+const notifyBestEffort = async (action, meta, fn) => {
+  try {
+    await fn();
+  } catch (error) {
+    logger.error(`${action} notification failed`, {
+      ...meta,
+      error: error.message,
+      stack: error.stack,
+    });
+  }
+};
+
+// Crear solicitud de INTERCAMBIO o COMPRA
 const enviarSolicitud = async (
   requesterId,
   { offeredPublicationId, requestedPublicationId, complementaryAmount, type = "exchange" },
 ) => {
-  // Verificar publicación solicitada (siempre requerida)
   const requestedPublication = await publicationRepository.findById(requestedPublicationId);
-  if (!requestedPublication) throw new AppError("Publicación no encontrada", 404);
+  if (!requestedPublication) throw new AppError("Publicacion no encontrada", 404);
   if (requestedPublication.status !== "available") {
-    throw new AppError("La publicación no está disponible", 400);
+    throw new AppError("La publicacion no esta disponible", 400);
   }
   if (requestedPublication.owner._id.toString() === requesterId.toString()) {
-    throw new AppError("No podés comprar/solicitar tu propia publicación", 400);
+    throw new AppError("No podes comprar/solicitar tu propia publicacion", 400);
   }
 
-  // Evitar solicitudes duplicadas activas
   const activeExchange = await exchangeRepository.findActiveByRequesterAndPublication(
     requesterId,
     requestedPublicationId,
   );
   if (activeExchange) {
-    throw new AppError("Ya tenés una solicitud activa para esta publicación", 409);
+    throw new AppError("Ya tenes una solicitud activa para esta publicacion", 409);
   }
 
-  // ── Flujo COMPRA ──────────────────────────────────────────────────────────
+  const requester = await userRepository.findById(requesterId);
+
   if (type === "purchase") {
     if (requestedPublication.type === "trueque") {
-      throw new AppError("Esta publicación solo acepta intercambios, no ventas", 400);
+      throw new AppError("Esta publicacion solo acepta intercambios, no ventas", 400);
     }
 
     const exchange = await exchangeRepository.create({
@@ -44,20 +57,30 @@ const enviarSolicitud = async (
       type: "purchase",
     });
 
+    await notifyBestEffort(
+      "exchange_request_received",
+      { exchangeId: exchange._id, ownerId: requestedPublication.owner._id, requesterId },
+      () => notificationService.notifyExchangeRequestReceived({
+        exchange,
+        requester,
+        requestedPublication,
+        offeredPublication: null,
+      }),
+    );
+
     return exchange;
   }
 
-  // ── Flujo INTERCAMBIO ─────────────────────────────────────────────────────
   const offeredPublication = await publicationRepository.findById(offeredPublicationId);
-  if (!offeredPublication) throw new AppError("Publicación no encontrada", 404);
+  if (!offeredPublication) throw new AppError("Publicacion no encontrada", 404);
   if (offeredPublication.owner._id.toString() !== requesterId.toString()) {
-    throw new AppError("No podés ofrecer una publicación que no es tuya", 403);
+    throw new AppError("No podes ofrecer una publicacion que no es tuya", 403);
   }
   if (offeredPublication.status !== "available") {
-    throw new AppError("Tu publicación no está disponible", 400);
+    throw new AppError("Tu publicacion no esta disponible", 400);
   }
   if (offeredPublication._id.toString() === requestedPublication._id.toString()) {
-    throw new AppError("No podés intercambiar un objeto por sí mismo", 400);
+    throw new AppError("No podes intercambiar un objeto por si mismo", 400);
   }
 
   const exchange = await exchangeRepository.create({
@@ -68,6 +91,17 @@ const enviarSolicitud = async (
     complementaryAmount: complementaryAmount ?? 0,
     type: "exchange",
   });
+
+  await notifyBestEffort(
+    "exchange_request_received",
+    { exchangeId: exchange._id, ownerId: requestedPublication.owner._id, requesterId },
+    () => notificationService.notifyExchangeRequestReceived({
+      exchange,
+      requester,
+      requestedPublication,
+      offeredPublication,
+    }),
+  );
 
   return exchange;
 };
@@ -123,7 +157,7 @@ const obtenerPorId = async (userId, exchangeId) => {
   const esOwner = ownerId === userId.toString();
 
   if (!esRequester && !esOwner) {
-    throw new AppError("No participás en este intercambio/venta", 403);
+    throw new AppError("No participas en este intercambio/venta", 403);
   }
 
   return exchange;
@@ -135,19 +169,17 @@ const aceptarSolicitud = async (ownerId, exchangeId) => {
   const exchangeOwnerId = exchange.owner?._id?.toString() || exchange.owner?.toString();
   if (exchangeOwnerId !== ownerId.toString()) throw new AppError("No autorizado", 403);
   if (exchange.status !== "pending") {
-    throw new AppError("La solicitud no está en estado pendiente", 400);
+    throw new AppError("La solicitud no esta en estado pendiente", 400);
   }
 
   const updatedExchange = await exchangeRepository.updateStatusById(exchangeId, "active");
   const requestedPublicationId = exchange.requestedPublication._id;
 
   if (exchange.type === "purchase") {
-    // Compra: marcar intercambio activo en la publicación solicitada, manteniéndola disponible
     await publicationRepository.updateById(requestedPublicationId, {
       intercambioActivo: true,
     });
   } else {
-    // Intercambio: marcar intercambio activo en ambas publicaciones, manteniéndolas disponibles
     const offeredPublicationId = exchange.offeredPublication._id;
     await Promise.all([
       publicationRepository.updateById(offeredPublicationId, {
@@ -159,6 +191,15 @@ const aceptarSolicitud = async (ownerId, exchangeId) => {
     ]);
   }
 
+  await notifyBestEffort(
+    "exchange_request_accepted",
+    { exchangeId, ownerId, requesterId: exchange.requester._id || exchange.requester },
+    () => notificationService.notifyExchangeRequestAccepted({
+      exchange,
+      owner: exchange.owner,
+    }),
+  );
+
   return updatedExchange;
 };
 
@@ -168,14 +209,23 @@ const rechazarSolicitud = async (ownerId, exchangeId) => {
   const exchangeOwnerId = exchange.owner?._id?.toString() || exchange.owner?.toString();
   if (exchangeOwnerId !== ownerId.toString()) throw new AppError("No autorizado", 403);
   if (exchange.status !== "pending") {
-    throw new AppError("La solicitud no está en estado pendiente", 400);
+    throw new AppError("La solicitud no esta en estado pendiente", 400);
   }
 
   const updatedExchange = await exchangeRepository.updateStatusById(exchangeId, "rejected");
+
+  await notifyBestEffort(
+    "exchange_request_rejected",
+    { exchangeId, ownerId, requesterId: exchange.requester._id || exchange.requester },
+    () => notificationService.notifyExchangeRequestRejected({
+      exchange,
+      owner: exchange.owner,
+    }),
+  );
+
   return updatedExchange;
 };
 
-// Confirmar: intercambio (requester o owner) / venta (solo owner/vendedor)
 const confirmarIntercambio = async (userId, exchangeId) => {
   const exchange = await exchangeRepository.findById(exchangeId);
   if (!exchange) throw new AppError("Solicitud no encontrada", 404);
@@ -187,13 +237,12 @@ const confirmarIntercambio = async (userId, exchangeId) => {
   const esOwner = ownerId === userId.toString();
 
   if (!esRequester && !esOwner) {
-    throw new AppError("No participás en este intercambio/venta", 403);
+    throw new AppError("No participas en este intercambio/venta", 403);
   }
   if (exchange.status !== "active") {
-    throw new AppError("El intercambio/venta no está en curso", 400);
+    throw new AppError("El intercambio/venta no esta en curso", 400);
   }
 
-  // ── COMPRA: solo el vendedor (owner) confirma ─────────────────────────────
   if (exchange.type === "purchase") {
     if (!esOwner) throw new AppError("Solo el vendedor puede confirmar la venta", 403);
     if (exchange.confirmedByOwner) throw new AppError("Ya confirmaste esta venta", 400);
@@ -224,7 +273,6 @@ const confirmarIntercambio = async (userId, exchangeId) => {
     return updatedExchange;
   }
 
-  // ── INTERCAMBIO: ambas partes deben confirmar ─────────────────────────────
   if ((esRequester && exchange.confirmedByRequester) || (esOwner && exchange.confirmedByOwner)) {
     throw new AppError("Ya confirmaste este intercambio", 400);
   }
@@ -283,13 +331,12 @@ const cancelarIntercambio = async (userId, exchangeId) => {
   const esOwner = ownerId === userId.toString();
 
   if (!esRequester && !esOwner) {
-    throw new AppError("No participás en este intercambio/venta", 403);
+    throw new AppError("No participas en este intercambio/venta", 403);
   }
 
-  // Si está pendiente, solo el requester puede retirar su propuesta
   if (exchange.status === "pending") {
     if (!esRequester) {
-      throw new AppError("Como dueño, debés rechazar la solicitud en lugar de cancelarla", 400);
+      throw new AppError("Como dueno, debes rechazar la solicitud en lugar de cancelarla", 400);
     }
     return exchangeRepository.updateById(exchangeId, { status: "cancelled" });
   }
@@ -298,7 +345,6 @@ const cancelarIntercambio = async (userId, exchangeId) => {
     throw new AppError("No se puede cancelar una solicitud en este estado", 400);
   }
 
-  // ── COMPRA activa: restaurar solo la pub solicitada ───────────────────────
   if (exchange.type === "purchase") {
     const [updatedExchange] = await Promise.all([
       exchangeRepository.updateById(exchangeId, { status: "cancelled" }),
@@ -321,7 +367,6 @@ const cancelarIntercambio = async (userId, exchangeId) => {
     return updatedExchange;
   }
 
-  // ── INTERCAMBIO activo: restaurar ambas publicaciones ────────────────────
   const [updatedExchange] = await Promise.all([
     exchangeRepository.updateById(exchangeId, { status: "cancelled" }),
     publicationRepository.updateById(exchange.offeredPublication._id, {

@@ -6,6 +6,8 @@ const { registerChatHandlers } = require("./chat.socket");
 
 let io;
 
+const getUserRoom = (userId) => `user:${userId.toString()}`;
+
 const allowedOrigins = [
   process.env.FRONTEND_URL || "http://localhost:5173",
   "http://localhost:5173",
@@ -50,6 +52,9 @@ const initSocket = (httpServer) => {
   });
 
   io.on("connection", (socket) => {
+    // Cada usuario autenticado entra a su room privada para recibir
+    // notificaciones de producto sin mezclarlas con las rooms de chat.
+    socket.join(getUserRoom(socket.user._id));
     registerChatHandlers(io, socket);
   });
 
@@ -61,4 +66,5 @@ const getIO = () => io;
 module.exports = {
   initSocket,
   getIO,
+  getUserRoom,
 };
