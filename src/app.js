@@ -10,6 +10,7 @@ const publicationRoutes = require("./routes/publicationRoutes");
 const exchangeRoutes = require("./routes/exchangeRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const activeSearchRoutes = require("./routes/activeSearchRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 const requestContext = require("./middlewares/requestContext");
 
@@ -54,7 +55,7 @@ app.use("/api/publications", publicationRoutes);
 app.use("/api/exchanges", exchangeRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/active-searches", activeSearchRoutes);
-// app.use("/api/notifications", notificationRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Manejo global de errores - debe ir al final, despues de todas las rutas
 app.use(errorHandler);

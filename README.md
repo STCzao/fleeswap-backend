@@ -67,7 +67,7 @@ Fleeswap busca resolver un flujo de intercambio y/o venta de objetos entre perso
 - Perfil publico completo: hoy devuelve datos basicos e intercambios completados, pero no expone todavia publicaciones activas del usuario ni una reputacion real.
 - Sistema de reputacion: no existe aun el flujo de calificaciones, comentarios ni promedio real post-intercambio.
 - Preferencias de categorias y recomendaciones para Home: implementadas como HU complementaria de descubrimiento dentro de la Epica 5.
-- Busqueda activa y notificaciones persistentes: ya existe la base de `H5.1` y `H5.2` para crear, listar, editar, activar/desactivar y eliminar criterios, pero siguen pendientes matching automatico, persistencia de notificaciones y centro de notificaciones.
+- Busqueda activa y notificaciones: implementadas en backend a nivel MVP. El centro de notificaciones ya cubre coincidencias de busqueda activa y eventos clave de intercambio.
 - Suite de tests: existe una base amplia y funcional, pero sigue dependiendo de un entorno externo y tiene tiempos de corrida altos.
 - Observabilidad y endurecimiento operativo: existe trazabilidad basica, pero no todavia una estrategia completa de metricas, alertas y auditoria.
 
@@ -79,7 +79,7 @@ Tomando como referencia el Product Backlog MVP, el backend actual se alinea de e
 - Epica 2 - Gestion de Publicaciones: alineacion alta.
 - Epica 3 - Sistema de Intercambio: alineacion alta.
 - Epica 4 - Chat en Tiempo Real: alineacion alta.
-- Epica 5 - Busqueda Activa y Notificaciones: implementacion inicial.
+- Epica 5 - Busqueda Activa y Notificaciones: implementada en backend a nivel MVP.
 - Epica 6 - Sistema de Reputacion: implementacion parcial.
 
 ### Detalle por epica
@@ -149,19 +149,20 @@ Observacion:
 
 Estado actual:
 
-- implementacion inicial en backend.
+- implementada en backend a nivel MVP.
 
-Lo observado en el codigo:
+Cobertura actual:
 
-- ya existe una HU complementaria de descubrimiento basada en `preferredCategories` del usuario y `GET /api/publications/recommendations`.
-- esa HU cubre sugerencias personalizadas para el carrusel del Home, pero no reemplaza la busqueda activa definida en backlog.
-- siguen pendientes la entidad de busqueda activa, su gestion completa, el matching automatico por coincidencia, las notificaciones persistentes y los eventos de producto en tiempo real.
+- descubrimiento por categorias preferidas para Home;
+- creacion y gestion de busquedas activas;
+- matching automatico por coincidencia al crear publicaciones;
+- notificaciones persistentes y realtime;
+- centro de notificaciones con historial y estado de lectura;
+- inclusion de eventos de intercambio clave en el mismo centro.
 
-Lectura funcional sugerida:
+Salvedad operativa:
 
-- descubrimiento por preferencias de categorias;
-- busqueda activa como interes puntual persistente;
-- notificacion por coincidencia como consecuencia automatica de esa busqueda activa.
+- la suite automatizada que valida estos flujos sigue condicionada por el entorno externo de MongoDB, por lo que la verificacion integrada completa no siempre queda disponible en esta instancia.
 
 #### Epica 6 - Sistema de Reputacion
 
@@ -292,6 +293,12 @@ La base de seguridad actual incluye:
 - `PATCH /api/active-searches/:id`
 - `DELETE /api/active-searches/:id`
 
+### Notifications
+
+- `GET /api/notifications`
+- `PATCH /api/notifications/:id/read`
+- `PATCH /api/notifications/read-all`
+
 ### Exchanges
 
 - `GET /api/exchanges/received`
@@ -329,6 +336,16 @@ Eventos soportados:
 - `chat:enabled`
 - `chat:message`
 - `chat:readonly`
+- `notification:new`
+
+Entrega actual de notificaciones:
+
+- persistencia en base de datos para coincidencias de busqueda activa;
+- emision realtime a la room privada `user:<userId>` si el usuario esta conectado.
+- el matching actual se dispara solo al crear una publicacion nueva disponible;
+- las keywords se comparan contra `title`, `description` e `history`;
+- una misma publicacion notifica una sola vez por `user + activeSearch`.
+- el centro de notificaciones permite listar por fecha descendente y marcar una o todas como leidas.
 
 ## Variables de Entorno
 
@@ -385,6 +402,12 @@ Si existen criterios legacy creados antes de `criteriaSignature`, se puede ejecu
 
 ```bash
 npm run backfill:active-searches
+```
+
+Si existen notificaciones legacy creadas antes de `dedupeKey`, se puede ejecutar:
+
+```bash
+npm run backfill:notifications
 ```
 
 ## Calidad y Testing

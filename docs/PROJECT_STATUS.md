@@ -24,10 +24,10 @@ Contrastado contra el Product Backlog del MVP, la foto mas precisa es esta:
 - Epica 2: alineada.
 - Epica 3: alineada.
 - Epica 4: alineada.
-- Epica 5: parcial.
+- Epica 5: implementada en backend a nivel MVP.
 - Epica 6: parcial.
 
-Esto cambia una interpretacion importante del proyecto: el backend no esta atrasado en su nucleo transaccional, pero el MVP backlog completo aun no esta cerrado porque faltan las capacidades de descubrimiento, notificacion y reputacion.
+Esto cambia una interpretacion importante del proyecto: el backend no esta atrasado en su nucleo transaccional, pero el MVP backlog completo aun no esta cerrado principalmente por la Epica 6 y por la dependencia operativa de integraciones y entorno de test.
 
 ## Lo Mas Solido Hoy
 
@@ -125,133 +125,79 @@ Impacto:
 - la Epica 6 todavia no puede considerarse implementada;
 - la documentacion debe evitar dar a entender que la reputacion ya existe como funcionalidad cerrada.
 
-### 3. Busqueda activa y notificaciones estan iniciadas, pero lejos de cerrarse
+### 3. Busqueda activa y notificaciones estan implementadas en backend a nivel MVP
 
-El backlog del MVP contempla busqueda activa, matching automatico al crear publicaciones, entrega en tiempo real e historial persistente de notificaciones. Hoy existe un primer slice complementario de descubrimiento: preferencias de categorias en perfil y recomendaciones para Home.
+El backlog del MVP contempla busqueda activa, matching automatico al crear publicaciones, entrega en tiempo real e historial persistente de notificaciones. Hoy esa base ya esta implementada en backend y se apoya ademas en un slice complementario de descubrimiento: preferencias de categorias en perfil y recomendaciones para Home.
 
-Lo que hoy existe de forma concreta es:
+Cobertura actual:
 
 - preferencias de categorias persistidas en el usuario;
-- endpoint de recomendaciones para carrusel Home.
-
-Y lo que sigue pendiente es:
-
+- endpoint de recomendaciones para carrusel Home;
 - busqueda activa como entidad propia;
 - multiples criterios por usuario;
-- activacion/desactivacion de criterios sin eliminarlos;
+- activacion y desactivacion de criterios sin eliminarlos;
 - matching automatico por categoria, palabras clave y tipo;
 - notificaciones persistentes;
 - entrega de notificaciones en tiempo real;
-- centro de notificaciones con estado de lectura.
+- centro de notificaciones con historial y estado de lectura;
+- inclusion de eventos clave de intercambio dentro del mismo centro.
 
 Impacto:
 
-- la Epica 5 ya fue iniciada pero sigue lejos de cerrarse;
-- no conviene presentar el MVP como cerrado si esa epica sigue dentro del alcance acordado;
-- el siguiente sprint ya puede apoyarse sobre una primera base de descubrimiento;
-- lo implementado hasta ahora no reemplaza la HU formal de busqueda activa, sino que la complementa.
+- la Epica 5 ya no esta en estado inicial;
+- el alcance principal del backend ya fue implementado;
+- el centro de notificaciones ya cubre coincidencias de busqueda activa y eventos clave de intercambio;
+- queda como un cierre backend coherente a nivel MVP.
 
-## Detalle de Implementacion Prevista para Epica 5
+Lectura de cierre sugerida:
 
-Para evitar ambiguedades entre "buscar ahora", "descubrir sugerencias" y "recibir alertas", la Epica 5 se va a encarar en dos capas funcionales.
+- descubrimiento por categorias preferidas para Home;
+- creacion y gestion de busquedas activas;
+- matching automatico por coincidencia al crear publicaciones;
+- notificaciones persistentes y realtime;
+- centro de notificaciones con historial y estado de lectura;
+- inclusion de eventos de intercambio clave en el mismo centro.
 
-### Capa ya iniciada: descubrimiento personalizado
+Salvedad operativa:
 
-Esta parte ya tiene una base implementada:
+- la suite automatizada que valida estos flujos sigue condicionada por el entorno externo de MongoDB, por lo que la verificacion integrada completa no siempre queda disponible en esta instancia.
 
-- `preferredCategories` en perfil de usuario;
-- recomendaciones para el Home basadas en categorias preferidas;
-- exclusion de publicaciones propias y filtro de publicaciones disponibles.
-
-Rol funcional:
-
-- empujar contenido relevante al usuario;
-- mejorar el carrusel del Home;
-- complementar la exploracion general del catalogo.
-
-### Capa a implementar: busqueda activa y notificaciones
-
-Esta es la parte que corresponde al backlog formal de la epica y que todavia falta desarrollar.
-
-#### HU complementaria incorporada a la epica
-
-Se suma una HU nueva de descubrimiento:
-
-- el usuario puede seleccionar categorias de interes en su perfil;
-- el sistema usa esas preferencias para sugerir publicaciones en el Home.
-
-Esta HU complementa la epica, pero no sustituye las historias originales del backlog.
-
-#### HU formales a implementar
-
-Sobre la base del Product Backlog, lo siguiente a desarrollar es:
-
-1. Crear criterio de busqueda activa.
-2. Gestionar busquedas activas.
-3. Recibir notificacion por coincidencia.
-4. Centro de notificaciones.
-
-#### Desglose operativo de HU
-
-Para implementarlas una por una sin mezclar responsabilidades, la Epica 5 queda detallada asi:
+### Detalle actual de las HU de Epica 5
 
 - `HU5.0` Descubrimiento por preferencias de categorias.
-  Como usuario autenticado, quiero seleccionar categorias de interes en mi perfil para recibir sugerencias relevantes en el Home.
-  Estado: base ya implementada.
+  Estado: implementada en backend.
 - `HU5.1` Crear criterio de busqueda activa.
-  Como usuario autenticado, quiero registrar un criterio de busqueda por categoria, palabras clave y tipo para ser notificado cuando aparezca una coincidencia.
-  Estado: base implementada.
+  Estado: implementada en backend.
 - `HU5.2` Gestionar busquedas activas.
-  Como usuario autenticado, quiero listar, editar, activar, desactivar y eliminar mis criterios para mantener alertas relevantes.
   Estado: implementada en backend.
 - `HU5.3` Recibir notificacion por coincidencia.
-  Como usuario autenticado, quiero recibir una notificacion automatica cuando una nueva publicacion coincide con uno de mis criterios activos.
-  Estado: pendiente.
+  Estado: implementada en backend.
 - `HU5.4` Centro de notificaciones.
-  Como usuario autenticado, quiero consultar el historial de notificaciones y su estado de lectura para revisar alertas recientes y pasadas.
-  Estado: pendiente.
+  Estado: implementada en backend.
 
-#### Alcance tecnico previsto
+Cobertura actual de `H5.3`:
 
-Lo que vamos a implementar para cubrir esas HU es:
+- el matching corre solo al crear publicaciones nuevas;
+- solo procesa publicaciones `available`;
+- compara keywords contra `title`, `description` e `history`;
+- no notifica al owner de su propia publicacion;
+- deduplica a una notificacion por `user + activeSearch + publication + type`.
 
-- modelo propio para busquedas activas;
-- criterios por categoria, palabras clave y tipo (`trade`, `sale` o ambos);
-- multiples criterios por usuario;
-- activacion y desactivacion sin borrado obligatorio;
-- endpoints CRUD para administrar criterios;
-- proceso de matching al crear una publicacion nueva;
-- persistencia de notificaciones en base de datos;
-- entrega en tiempo real al usuario conectado;
-- listado de notificaciones ordenadas por fecha;
-- marcado individual y masivo como leidas.
+Cobertura actual de `H5.4`:
 
-#### Orden de desarrollo previsto
+- `GET /api/notifications` devuelve historial paginado del usuario;
+- incluye `unreadCount` para distinguir leidas y no leidas;
+- `PATCH /api/notifications/:id/read` marca una notificacion puntual como leida;
+- `PATCH /api/notifications/read-all` marca todas las no leidas del usuario;
+- el centro cubre `active_search_match`, `exchange_request_received`, `exchange_request_accepted` y `exchange_request_rejected`.
 
-El orden planeado para implementarlo es:
+Endurecimientos finales aplicados:
 
-1. entidad y CRUD de busqueda activa;
-2. matching automatico al alta de publicaciones;
-3. persistencia de notificaciones;
-4. eventos en tiempo real;
-5. centro de notificaciones y estado de lectura.
-
-#### Implementacion inmediata
-
-Entrega tecnica ya aplicada para `HU5.1`:
-
-- modelo dedicado para criterios de busqueda activa;
-- persistencia de multiples criterios por usuario;
-- validacion de categoria, palabras clave y tipo;
-- estado `isActive` para dejar preparada la activacion/desactivacion;
-- endpoint autenticado para crear criterios nuevos;
-- endpoint autenticado para listar criterios del usuario como base de `HU5.2`;
-- endpoint autenticado para editar criterios existentes;
-- soporte de activacion y desactivacion por `PATCH`;
-- endpoint autenticado para eliminar criterios;
-- deduplicacion logica de criterios normalizados por usuario;
-- compatibilidad con datos legacy mediante `criteriaSignature` canonica e indice parcial;
-- script de backfill para completar criterios viejos si fuera necesario.
+- `dedupeKey` autogenerada para notificaciones nuevas cuando el evento lo permite;
+- indice parcial para compatibilidad con datos legacy;
+- script de backfill para completar `dedupeKey` en notificaciones existentes;
+- payload de intercambio enriquecido con categoria y tipo reales de la publicacion solicitada;
+- test realtime adicional para `exchange_request_received`.
 
 ### 4. Endurecimiento operacional todavia limitado
 
@@ -311,7 +257,7 @@ La forma mas honesta de describir donde estamos es esta:
 
 1. El proyecto ya tiene arquitectura y dominio suficientemente claros como para crecer sin reescritura completa.
 2. El backend soporta bien los casos nucleares de publicaciones, intercambio, chat y autenticacion.
-3. El backlog MVP todavia no esta completamente materializado por la parcialidad de Epica 5 y la parcialidad de Epica 6.
+3. El backlog MVP todavia no esta completamente materializado principalmente por la parcialidad de Epica 6 y por deuda operativa alrededor del entorno de validacion.
 4. La siguiente etapa deberia combinar dos frentes: cerrar el alcance funcional faltante y consolidar confianza tecnica.
 
 ## Prioridades Naturales para la Proxima Etapa
@@ -319,7 +265,6 @@ La forma mas honesta de describir donde estamos es esta:
 Sin entrar todavia en plan de arreglos, la siguiente etapa del proyecto deberia enfocarse en:
 
 - estabilizar y acelerar la suite automatizada;
-- desarrollar Epica 5 sobre la arquitectura existente;
 - cerrar los faltantes funcionales de Epica 6;
 - fortalecer observabilidad y disciplina operativa;
 - endurecer integraciones externas y fallback;

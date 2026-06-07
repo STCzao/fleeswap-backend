@@ -25,6 +25,16 @@ const updateById = (id, data) =>
 
 const deleteById = (id) => ActiveSearch.findByIdAndDelete(id);
 
+// Filtra primero por owner/category/type/isActive para no evaluar palabras clave
+// contra toda la colección cuando se crea una publicación nueva.
+const findMatchingCandidates = ({ ownerId, category, compatibleTypes }) =>
+  ActiveSearch.find({
+    user: { $ne: ownerId },
+    isActive: true,
+    category,
+    type: { $in: compatibleTypes },
+  }).select("user category keywords type isActive");
+
 module.exports = {
   create,
   findByUser,
@@ -33,4 +43,5 @@ module.exports = {
   findByUserAndCriteriaExcludingId,
   updateById,
   deleteById,
+  findMatchingCandidates,
 };

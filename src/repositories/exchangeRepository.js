@@ -5,7 +5,7 @@ const create = (data) => Exchange.create(data);
 const findById = (id) =>
   Exchange.findById(id)
     .populate("offeredPublication", "title photos")
-    .populate("requestedPublication", "title photos owner")
+    .populate("requestedPublication", "title photos owner category type")
     .populate("requester", "nombre apellido photo")
     .populate("owner", "nombre apellido photo")
     .select("+type");
@@ -50,7 +50,7 @@ const findReceivedByOwner = (ownerId, statusFilter, { skip, limit }) =>
   Exchange.find({ owner: ownerId, ...statusFilter })
     .populate("offeredPublication", "title photos category condition")
     .populate("requester", "nombre apellido photo")
-    .populate("requestedPublication", "title photos")
+    .populate("requestedPublication", "title photos category type")
     .select("+type")
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -62,7 +62,7 @@ const countReceived = (ownerId, statusFilter) =>
 const findSentByRequester = (requesterId, statusFilter, { skip, limit }) =>
   Exchange.find({ requester: requesterId, ...statusFilter })
     .populate("offeredPublication", "title photos")
-    .populate("requestedPublication", "title photos owner")
+    .populate("requestedPublication", "title photos owner category type")
     .populate("owner", "nombre apellido photo")
     .select("+type")
     .sort({ createdAt: -1 })
