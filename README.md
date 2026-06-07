@@ -67,7 +67,7 @@ Fleeswap busca resolver un flujo de intercambio y/o venta de objetos entre perso
 - Perfil publico completo: hoy devuelve datos basicos e intercambios completados, pero no expone todavia publicaciones activas del usuario ni una reputacion real.
 - Sistema de reputacion: no existe aun el flujo de calificaciones, comentarios ni promedio real post-intercambio.
 - Preferencias de categorias y recomendaciones para Home: implementadas como HU complementaria de descubrimiento dentro de la Epica 5.
-- Busqueda activa y notificaciones persistentes: existe ya la base de `H5.1` para crear criterios, pero siguen pendientes matching automatico, persistencia de notificaciones y centro de notificaciones.
+- Busqueda activa y notificaciones persistentes: ya existe la base de `H5.1` y `H5.2` para crear, listar, editar, activar/desactivar y eliminar criterios, pero siguen pendientes matching automatico, persistencia de notificaciones y centro de notificaciones.
 - Suite de tests: existe una base amplia y funcional, pero sigue dependiendo de un entorno externo y tiene tiempos de corrida altos.
 - Observabilidad y endurecimiento operativo: existe trazabilidad basica, pero no todavia una estrategia completa de metricas, alertas y auditoria.
 
@@ -289,6 +289,8 @@ La base de seguridad actual incluye:
 
 - `GET /api/active-searches`
 - `POST /api/active-searches`
+- `PATCH /api/active-searches/:id`
+- `DELETE /api/active-searches/:id`
 
 ### Exchanges
 
@@ -375,6 +377,14 @@ npm start
 
 ```bash
 npm test
+```
+
+### Mantenimiento de busquedas activas
+
+Si existen criterios legacy creados antes de `criteriaSignature`, se puede ejecutar:
+
+```bash
+npm run backfill:active-searches
 ```
 
 ## Calidad y Testing

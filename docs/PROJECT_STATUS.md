@@ -203,7 +203,7 @@ Para implementarlas una por una sin mezclar responsabilidades, la Epica 5 queda 
   Estado: base implementada.
 - `HU5.2` Gestionar busquedas activas.
   Como usuario autenticado, quiero listar, editar, activar, desactivar y eliminar mis criterios para mantener alertas relevantes.
-  Estado: pendiente.
+  Estado: implementada en backend.
 - `HU5.3` Recibir notificacion por coincidencia.
   Como usuario autenticado, quiero recibir una notificacion automatica cuando una nueva publicacion coincide con uno de mis criterios activos.
   Estado: pendiente.
@@ -245,7 +245,13 @@ Entrega tecnica ya aplicada para `HU5.1`:
 - validacion de categoria, palabras clave y tipo;
 - estado `isActive` para dejar preparada la activacion/desactivacion;
 - endpoint autenticado para crear criterios nuevos;
-- endpoint autenticado para listar criterios del usuario como base de `HU5.2`.
+- endpoint autenticado para listar criterios del usuario como base de `HU5.2`;
+- endpoint autenticado para editar criterios existentes;
+- soporte de activacion y desactivacion por `PATCH`;
+- endpoint autenticado para eliminar criterios;
+- deduplicacion logica de criterios normalizados por usuario;
+- compatibilidad con datos legacy mediante `criteriaSignature` canonica e indice parcial;
+- script de backfill para completar criterios viejos si fuera necesario.
 
 ### 4. Endurecimiento operacional todavia limitado
 
