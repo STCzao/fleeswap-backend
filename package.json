@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
+    "backfill:active-searches": "node scripts/backfillActiveSearchCriteriaSignature.js",
     "test": "mocha --require dotenv/config --require test/setup.js test/**/*.test.js --timeout 10000"
   },
   "repository": {

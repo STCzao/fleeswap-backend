@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { normalizeKeywords, buildCriteriaSignature } = require("../helpers/activeSearchCriteria");
 
 const SEARCH_CATEGORIES = [
   "electronica",
@@ -61,6 +62,30 @@ const activeSearchSchema = new mongoose.Schema(
 );
 
 activeSearchSchema.index({ user: 1, isActive: 1, createdAt: -1 });
-activeSearchSchema.index({ user: 1, criteriaSignature: 1 }, { unique: true });
+activeSearchSchema.index(
+  { user: 1, criteriaSignature: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      criteriaSignature: { $exists: true, $type: "string" },
+    },
+  },
+);
+
+activeSearchSchema.pre("validate", function (next) {
+  if (Array.isArray(this.keywords)) {
+    this.keywords = normalizeKeywords(this.keywords);
+  }
+
+  if (this.category && this.type) {
+    this.criteriaSignature = buildCriteriaSignature({
+      category: this.category,
+      keywords: this.keywords,
+      type: this.type,
+    });
+  }
+
+  next();
+});
 
 module.exports = mongoose.model("ActiveSearch", activeSearchSchema);

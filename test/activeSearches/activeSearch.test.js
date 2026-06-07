@@ -5,6 +5,7 @@ const app = require("../../src/app");
 const User = require("../../src/models/User");
 const ActiveSearch = require("../../src/models/ActiveSearch");
 const { generateAccessToken } = require("../../src/helpers/generateToken");
+const { buildCriteriaSignature } = require("../../src/helpers/activeSearchCriteria");
 
 const crearUsuarioConToken = async (overrides = {}) => {
   const user = await User.create({
@@ -148,6 +149,11 @@ describe("Active Searches API", function () {
         category: "electronica",
         keywords: ["camara"],
         type: "venta",
+        criteriaSignature: buildCriteriaSignature({
+          category: "electronica",
+          keywords: ["camara"],
+          type: "venta",
+        }),
         isActive: true,
       });
 
@@ -156,6 +162,11 @@ describe("Active Searches API", function () {
         category: "libros_comics",
         keywords: ["batman"],
         type: "trueque",
+        criteriaSignature: buildCriteriaSignature({
+          category: "libros_comics",
+          keywords: ["batman"],
+          type: "trueque",
+        }),
         isActive: false,
       });
     });
@@ -183,6 +194,251 @@ describe("Active Searches API", function () {
     it("rechaza listado sin autenticacion", async () => {
       const res = await request(app)
         .get("/api/active-searches");
+
+      expect(res.status).to.equal(401);
+    });
+  });
+
+  describe("PATCH /api/active-searches/:id", () => {
+    let user;
+    let token;
+    let activeSearch;
+    let duplicateSearch;
+    let otherUser;
+    let otherToken;
+
+    beforeEach(async () => {
+      ({ user, token } = await crearUsuarioConToken());
+      ({ user: otherUser, token: otherToken } = await crearUsuarioConToken());
+
+      activeSearch = await ActiveSearch.create({
+        user: user._id,
+        category: "electronica",
+        keywords: ["camara"],
+        type: "venta",
+        criteriaSignature: buildCriteriaSignature({
+          category: "electronica",
+          keywords: ["camara"],
+          type: "venta",
+        }),
+        isActive: true,
+      });
+
+      duplicateSearch = await ActiveSearch.create({
+        user: user._id,
+        category: "libros_comics",
+        keywords: ["batman"],
+        type: "trueque",
+        criteriaSignature: buildCriteriaSignature({
+          category: "libros_comics",
+          keywords: ["batman"],
+          type: "trueque",
+        }),
+        isActive: true,
+      });
+    });
+
+    afterEach(async () => {
+      await ActiveSearch.deleteMany({
+        _id: { $in: [activeSearch._id, duplicateSearch._id] },
+      });
+      await User.deleteOne({ _id: user._id });
+      await User.deleteOne({ _id: otherUser._id });
+    });
+
+    it("edita un criterio existente del usuario autenticado", async () => {
+      const res = await request(app)
+        .patch(`/api/active-searches/${activeSearch._id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          category: "arte",
+          keywords: [" oleo ", "canvas"],
+          type: "ambos",
+          isActive: false,
+        });
+
+      expect(res.status).to.equal(200);
+      expect(res.body).to.include({
+        category: "arte",
+        type: "ambos",
+        isActive: false,
+      });
+      expect(res.body.keywords).to.deep.equal(["canvas", "oleo"]);
+    });
+
+    it("permite activar o desactivar sin cambiar el resto del criterio", async () => {
+      const res = await request(app)
+        .patch(`/api/active-searches/${activeSearch._id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          isActive: false,
+        });
+
+      expect(res.status).to.equal(200);
+      expect(res.body).to.include({
+        category: "electronica",
+        type: "venta",
+        isActive: false,
+      });
+      expect(res.body.keywords).to.deep.equal(["camara"]);
+    });
+
+    it("rechaza editar un criterio de otro usuario", async () => {
+      const res = await request(app)
+        .patch(`/api/active-searches/${activeSearch._id}`)
+        .set("Authorization", `Bearer ${otherToken}`)
+        .send({
+          isActive: false,
+        });
+
+      expect(res.status).to.equal(403);
+      expect(res.body).to.deep.equal({
+        message: "No autorizado",
+      });
+    });
+
+    it("rechaza editar un criterio hacia un duplicado logico", async () => {
+      const res = await request(app)
+        .patch(`/api/active-searches/${activeSearch._id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          category: "libros_comics",
+          keywords: [" Batman "],
+          type: "trueque",
+        });
+
+      expect(res.status).to.equal(409);
+      expect(res.body).to.deep.equal({
+        message: "Ya existe un criterio de busqueda igual",
+      });
+    });
+
+    it("rechaza editar un criterio inexistente", async () => {
+      const nonExistingId = new mongoose.Types.ObjectId();
+
+      const res = await request(app)
+        .patch(`/api/active-searches/${nonExistingId}`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          isActive: false,
+        });
+
+      expect(res.status).to.equal(404);
+      expect(res.body).to.deep.equal({
+        message: "Criterio de busqueda no encontrado",
+      });
+    });
+
+    it("rechaza editar con body vacio", async () => {
+      const res = await request(app)
+        .patch(`/api/active-searches/${activeSearch._id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({});
+
+      expect(res.status).to.equal(400);
+      expect(res.body).to.deep.equal({
+        message: "Solicitud invalida",
+      });
+    });
+
+    it("rechaza editar con isActive invalido", async () => {
+      const res = await request(app)
+        .patch(`/api/active-searches/${activeSearch._id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({
+          isActive: "quizas",
+        });
+
+      expect(res.status).to.equal(400);
+      expect(res.body.errors).to.deep.include({
+        field: "isActive",
+        message: "isActive debe ser booleano",
+      });
+    });
+
+    it("rechaza editar sin autenticacion", async () => {
+      const res = await request(app)
+        .patch(`/api/active-searches/${activeSearch._id}`)
+        .send({
+          isActive: false,
+        });
+
+      expect(res.status).to.equal(401);
+    });
+  });
+
+  describe("DELETE /api/active-searches/:id", () => {
+    let user;
+    let token;
+    let activeSearch;
+    let otherUser;
+    let otherToken;
+
+    beforeEach(async () => {
+      ({ user, token } = await crearUsuarioConToken());
+      ({ user: otherUser, token: otherToken } = await crearUsuarioConToken());
+
+      activeSearch = await ActiveSearch.create({
+        user: user._id,
+        category: "electronica",
+        keywords: ["camara"],
+        type: "venta",
+        criteriaSignature: buildCriteriaSignature({
+          category: "electronica",
+          keywords: ["camara"],
+          type: "venta",
+        }),
+        isActive: true,
+      });
+    });
+
+    afterEach(async () => {
+      await ActiveSearch.deleteMany({ _id: activeSearch._id });
+      await User.deleteOne({ _id: user._id });
+      await User.deleteOne({ _id: otherUser._id });
+    });
+
+    it("elimina un criterio propio", async () => {
+      const res = await request(app)
+        .delete(`/api/active-searches/${activeSearch._id}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).to.equal(200);
+      expect(res.body).to.deep.equal({
+        message: "Criterio de busqueda eliminado correctamente",
+      });
+
+      const deleted = await ActiveSearch.findById(activeSearch._id);
+      expect(deleted).to.equal(null);
+    });
+
+    it("rechaza eliminar un criterio de otro usuario", async () => {
+      const res = await request(app)
+        .delete(`/api/active-searches/${activeSearch._id}`)
+        .set("Authorization", `Bearer ${otherToken}`);
+
+      expect(res.status).to.equal(403);
+      expect(res.body).to.deep.equal({
+        message: "No autorizado",
+      });
+    });
+
+    it("rechaza eliminar un criterio inexistente", async () => {
+      const nonExistingId = new mongoose.Types.ObjectId();
+
+      const res = await request(app)
+        .delete(`/api/active-searches/${nonExistingId}`)
+        .set("Authorization", `Bearer ${token}`);
+
+      expect(res.status).to.equal(404);
+      expect(res.body).to.deep.equal({
+        message: "Criterio de busqueda no encontrado",
+      });
+    });
+
+    it("rechaza eliminar sin autenticacion", async () => {
+      const res = await request(app)
+        .delete(`/api/active-searches/${activeSearch._id}`);
 
       expect(res.status).to.equal(401);
     });
