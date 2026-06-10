@@ -72,7 +72,7 @@ activeSearchSchema.index(
   },
 );
 
-activeSearchSchema.pre("validate", function (next) {
+activeSearchSchema.pre("validate", function () {
   if (Array.isArray(this.keywords)) {
     this.keywords = normalizeKeywords(this.keywords);
   }
@@ -84,8 +84,6 @@ activeSearchSchema.pre("validate", function (next) {
       type: this.type,
     });
   }
-
-  next();
 });
 
 module.exports = mongoose.model("ActiveSearch", activeSearchSchema);

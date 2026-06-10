@@ -113,7 +113,7 @@ notificationSchema.index(
   },
 );
 
-notificationSchema.pre("validate", function (next) {
+notificationSchema.pre("validate", function () {
   if (!this.dedupeKey) {
     this.dedupeKey = buildNotificationDedupeKey({
       type: this.type,
@@ -122,8 +122,6 @@ notificationSchema.pre("validate", function (next) {
       exchange: this.exchange,
     });
   }
-
-  next();
 });
 
 module.exports = mongoose.model("Notification", notificationSchema);
