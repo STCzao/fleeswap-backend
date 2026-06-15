@@ -518,7 +518,7 @@ describe("Chat — Modo Solo Lectura (readonly)", () => {
   });
 
   // ════════════════════════════════════════════════════════════════════════════
-  // TEST 6a — chat:readonly emitido al cancelar un exchange activo via API
+  // TEST 6a — chat:readonly emitido al cancelar un exchange activo vía API
   // ════════════════════════════════════════════════════════════════════════════
 
   describe("Evento en tiempo real — chat:readonly al cancelar exchange activo", () => {
@@ -558,13 +558,13 @@ describe("Chat — Modo Solo Lectura (readonly)", () => {
         });
       });
 
-      // 4. Owner cancela el exchange via API
+      // 4. Owner cancela el exchange vía API
       const resCancelacion = await request(app)
         .patch(`/api/exchanges/${exchange._id}/cancel`)
         .set("Authorization", `Bearer ${ownerData.token}`);
 
       expect(resCancelacion.status).to.equal(200,
-        "La cancelación via API debe ser exitosa");
+        "La cancelación vía API debe ser exitosa");
 
       // 5. Esperar y verificar el evento recibido por el socket
       const payload = await readonlyPromise;
@@ -669,7 +669,7 @@ describe("Chat — Modo Solo Lectura (readonly)", () => {
   });
 
   // ════════════════════════════════════════════════════════════════════════════
-  // TEST 6c — chat:readonly emitido al completar exchange via doble confirmación
+  // TEST 6c — chat:readonly emitido al completar exchange vía doble confirmación
   // ════════════════════════════════════════════════════════════════════════════
 
   describe("Evento en tiempo real — chat:readonly al completar exchange", () => {

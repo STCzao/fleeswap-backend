@@ -25,7 +25,7 @@ const listarPorUsuario = async (userId, query) => {
 
 const marcarLeida = async (notificationId, userId) => {
   const notification = await notificationRepository.findById(notificationId);
-  if (!notification) throw new AppError("Notificacion no encontrada", 404);
+  if (!notification) throw new AppError("Notificación no encontrada", 404);
   if (notification.user.toString() !== userId.toString()) {
     throw new AppError("No autorizado", 403);
   }

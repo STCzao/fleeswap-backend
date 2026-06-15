@@ -26,10 +26,10 @@ const activeSearchSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      required: [true, "La categoria es requerida"],
+      required: [true, "La categoría es requerida"],
       enum: {
         values: SEARCH_CATEGORIES,
-        message: "La categoria de busqueda no es valida",
+        message: "La categoría de búsqueda no es válida",
       },
     },
     keywords: {
@@ -37,7 +37,7 @@ const activeSearchSchema = new mongoose.Schema(
       default: [],
       validate: {
         validator: (arr) => arr.length <= 10,
-        message: "No se pueden enviar mas de 10 palabras clave",
+        message: "No se pueden enviar más de 10 palabras clave",
       },
     },
     type: {
@@ -45,7 +45,7 @@ const activeSearchSchema = new mongoose.Schema(
       default: "ambos",
       enum: {
         values: SEARCH_TYPES,
-        message: "El tipo de busqueda no es valido",
+        message: "El tipo de búsqueda no es válido",
       },
     },
     criteriaSignature: {

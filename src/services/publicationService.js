@@ -7,7 +7,7 @@ const sanitizarTexto = require("../helpers/sanitizarTexto");
 const logger = require("../helpers/logger");
 const AppError = require("../helpers/AppError");
 
-// A partir de este numero de reportes la publicacion se suspende automaticamente,
+// A partir de este número de reportes la publicación se suspende automáticamente,
 // sin intervencion del admin. El admin puede reactivarla manualmente si lo considera necesario.
 const REPORT_THRESHOLD = 5;
 
@@ -26,7 +26,7 @@ const crear = async (
     owner: ownerId,
   });
 
-  // H5.3: las notificaciones son un side effect del alta de la publicacion.
+  // H5.3: las notificaciones son un side effect del alta de la publicación.
   // Si fallan, se loguea el problema pero no se revierte ni se rompe el 201.
   try {
     await notificationService.processPublicationMatches(publication);
@@ -44,7 +44,7 @@ const crear = async (
 
 const editar = async (publicationId, ownerId, fields) => {
   const publication = await publicationRepository.findById(publicationId);
-  if (!publication) throw new AppError("Publicacion no encontrada", 404);
+  if (!publication) throw new AppError("Publicación no encontrada", 404);
   if (publication.owner._id.toString() !== ownerId.toString()) throw new AppError("No autorizado", 403);
 
   const data = {};
@@ -56,39 +56,39 @@ const editar = async (publicationId, ownerId, fields) => {
   if (fields.type !== undefined) data.type = fields.type;
   if (fields.photos !== undefined) data.photos = fields.photos;
 
-  if (Object.keys(data).length === 0) throw new AppError("Solicitud invalida", 400);
+  if (Object.keys(data).length === 0) throw new AppError("Solicitud inválida", 400);
 
   return publicationRepository.updateById(publicationId, data);
 };
 
 const eliminar = async (publicationId, ownerId) => {
   const publication = await publicationRepository.findById(publicationId);
-  if (!publication) throw new AppError("Publicacion no encontrada", 404);
+  if (!publication) throw new AppError("Publicación no encontrada", 404);
   if (publication.owner._id.toString() !== ownerId.toString()) throw new AppError("No autorizado", 403);
-  if (publication.intercambioActivo) throw new AppError("No se puede eliminar una publicacion con un intercambio en curso", 409);
+  if (publication.intercambioActivo) throw new AppError("No se puede eliminar una publicación con un intercambio en curso", 409);
 
   await publicationRepository.deleteById(publicationId);
 };
 
 const cambiarEstado = async (publicationId, ownerId, status) => {
   const publication = await publicationRepository.findById(publicationId);
-  if (!publication) throw new AppError("Publicacion no encontrada", 404);
+  if (!publication) throw new AppError("Publicación no encontrada", 404);
   if (publication.owner._id.toString() !== ownerId.toString()) throw new AppError("No autorizado", 403);
 
   return publicationRepository.updateById(publicationId, { status });
 };
 
 // requesterId es opcional; viene del optionalAuthenticate middleware.
-// Una publicacion unavailable o suspended solo es visible para su owner; para el resto es 404.
+// Una publicación unavailable o suspended solo es visible para su owner; para el resto es 404.
 const verDetalle = async (publicationId, requesterId = null) => {
   const publication = await publicationRepository.findById(publicationId);
-  if (!publication) throw new AppError("Publicacion no encontrada", 404);
+  if (!publication) throw new AppError("Publicación no encontrada", 404);
 
   if (publication.status === "unavailable" || publication.status === "suspended") {
     const isOwner =
       requesterId &&
       publication.owner._id.toString() === requesterId.toString();
-    if (!isOwner) throw new AppError("Publicacion no encontrada", 404);
+    if (!isOwner) throw new AppError("Publicación no encontrada", 404);
   }
 
   return publication;
@@ -125,18 +125,18 @@ const listar = async (filtros) => {
 
 const reportar = async (publicationId, reporterId, reason, details) => {
   const publication = await publicationRepository.findById(publicationId);
-  if (!publication) throw new AppError("Publicacion no encontrada", 404);
+  if (!publication) throw new AppError("Publicación no encontrada", 404);
 
-  // Bloqueamos el auto-reporte; un dueno no puede usar el sistema de reportes para inflar metricas falsas.
+  // Bloqueamos el auto-reporte; un dueño no puede usar el sistema de reportes para inflar métricas falsas.
   if (publication.owner._id.toString() === reporterId.toString()) {
-    throw new AppError("No podes reportar tu propia publicacion", 400);
+    throw new AppError("No podés reportar tu propia publicación", 400);
   }
 
   const existente = await reportRepository.findByPublicationAndReporter(
     publicationId,
     reporterId,
   );
-  if (existente) throw new AppError("Ya reportaste esta publicacion", 409);
+  if (existente) throw new AppError("Ya reportaste esta publicación", 409);
 
   await reportRepository.create({ publicationId, reporterId, reason, details });
 

@@ -1,7 +1,7 @@
 const activeSearchService = require("../services/activeSearchService");
 
 // POST /api/active-searches
-// Crea un nuevo criterio de busqueda activa para el usuario autenticado.
+// Crea un nuevo criterio de búsqueda activa para el usuario autenticado.
 const crear = async (req, res, next) => {
   try {
     const activeSearch = await activeSearchService.crear(req.user._id, req.body);
@@ -12,7 +12,7 @@ const crear = async (req, res, next) => {
 };
 
 // GET /api/active-searches
-// Devuelve los criterios de busqueda del usuario autenticado.
+// Devuelve los criterios de búsqueda del usuario autenticado.
 const listar = async (req, res, next) => {
   try {
     const activeSearches = await activeSearchService.listarPorUsuario(req.user._id);
@@ -23,7 +23,7 @@ const listar = async (req, res, next) => {
 };
 
 // PATCH /api/active-searches/:id
-// Permite editar criterios y activar/desactivar una busqueda existente del usuario autenticado.
+// Permite editar criterios y activar/desactivar una búsqueda existente del usuario autenticado.
 const editar = async (req, res, next) => {
   try {
     const activeSearch = await activeSearchService.editar(
@@ -38,11 +38,11 @@ const editar = async (req, res, next) => {
 };
 
 // DELETE /api/active-searches/:id
-// Elimina un criterio de busqueda del usuario autenticado.
+// Elimina un criterio de búsqueda del usuario autenticado.
 const eliminar = async (req, res, next) => {
   try {
     await activeSearchService.eliminar(req.params.id, req.user._id);
-    res.status(200).json({ message: "Criterio de busqueda eliminado correctamente" });
+    res.status(200).json({ message: "Criterio de búsqueda eliminado correctamente" });
   } catch (err) {
     next(err);
   }

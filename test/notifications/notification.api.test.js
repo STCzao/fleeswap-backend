@@ -55,8 +55,8 @@ const crearNotificacion = async (userId, publication, activeSearch, overrides = 
   Notification.create({
     user: userId,
     type: "active_search_match",
-    title: "Nueva coincidencia para tu busqueda",
-    message: `Se publico "${publication.title}" y coincide con uno de tus criterios activos.`,
+    title: "Nueva coincidencia para tu búsqueda",
+    message: `Se publicó "${publication.title}" y coincide con uno de tus criterios activos.`,
     isRead: false,
     dedupeKey: `active_search_match:${activeSearch._id}:${publication._id}:${Math.random().toString(36).slice(2)}`,
     publication: publication._id,
@@ -151,7 +151,7 @@ describe("Notifications API", function () {
   });
 
   describe("PATCH /api/notifications/:id/read", () => {
-    it("marca una notificacion propia como leida", async () => {
+    it("marca una notificación propia como leida", async () => {
       const { user, token } = await crearUsuarioConToken();
       const { user: owner } = await crearUsuarioConToken();
       const { publication, activeSearch } = await crearDependencias(owner._id, user._id);
@@ -168,7 +168,7 @@ describe("Notifications API", function () {
       expect(saved.isRead).to.equal(true);
     });
 
-    it("rechaza marcar como leida una notificacion ajena", async () => {
+    it("rechaza marcar como leida una notificación ajena", async () => {
       const { user } = await crearUsuarioConToken();
       const { user: otherUser, token: otherToken } = await crearUsuarioConToken();
       const { user: owner } = await crearUsuarioConToken();
@@ -185,7 +185,7 @@ describe("Notifications API", function () {
   });
 
   describe("PATCH /api/notifications/read-all", () => {
-    it("marca todas las notificaciones no leidas del usuario autenticado", async () => {
+    it("marca todas las notificaciones no leídas del usuario autenticado", async () => {
       const { user, token } = await crearUsuarioConToken();
       const { user: owner } = await crearUsuarioConToken();
       const { publication, activeSearch } = await crearDependencias(owner._id, user._id);
@@ -226,7 +226,7 @@ describe("Notifications API", function () {
         .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).to.equal(200);
-      expect(res.body.message).to.equal("Notificaciones marcadas como leidas");
+      expect(res.body.message).to.equal("Notificaciones marcadas como leídas");
       expect(res.body.modifiedCount).to.equal(2);
 
       const unreadCount = await Notification.countDocuments({ user: user._id, isRead: false });

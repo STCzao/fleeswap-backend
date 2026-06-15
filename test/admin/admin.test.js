@@ -75,8 +75,8 @@ describe("Admin API", () => {
     const publication = await Publication.create({
       owner: userId,
       title: "Pub Admin Test",
-      description: "Descripcion para pruebas admin",
-      history: "Historia de la publicacion admin test",
+      description: "Descripción para pruebas admin",
+      history: "Historia de la publicación admin test",
       category: "electronica",
       condition: "nuevo",
       type: "trueque",
@@ -88,8 +88,8 @@ describe("Admin API", () => {
     const suspendPublication = await Publication.create({
       owner: userId,
       title: "Pub Admin Test",
-      description: "Descripcion para suspension admin",
-      history: "Historia para suspension admin test",
+      description: "Descripción para suspensión admin",
+      history: "Historia para suspensión admin test",
       category: "electronica",
       condition: "bueno",
       type: "venta",
@@ -139,7 +139,7 @@ describe("Admin API", () => {
   });
 
   describe("GET /api/admin/stats", () => {
-    it("H7.1 - 200 con las 4 metricas para admin", async () => {
+    it("H7.1 - 200 con las 4 métricas para admin", async () => {
       const res = await request(app)
         .get("/api/admin/stats")
         .set("Authorization", `Bearer ${adminToken}`);
@@ -246,7 +246,7 @@ describe("Admin API", () => {
       expect(res.body).to.have.property("message", "No tenés permisos para realizar esta acción");
     });
 
-    it("H7.2 - 400 con role invalido", async () => {
+    it("H7.2 - 400 con role inválido", async () => {
       const res = await request(app)
         .get("/api/admin/users?role=INVALID_ROLE")
         .set("Authorization", `Bearer ${adminToken}`);
@@ -320,7 +320,7 @@ describe("Admin API", () => {
       expect(res.body).to.have.property("message", "No tenés permisos para realizar esta acción");
     });
 
-    it("H7.5 - 400 con status invalido", async () => {
+    it("H7.5 - 400 con status inválido", async () => {
       const res = await request(app)
         .get("/api/admin/reports?status=INVALIDO")
         .set("Authorization", `Bearer ${adminToken}`);
@@ -329,7 +329,7 @@ describe("Admin API", () => {
       expect(res.body).to.have.property("errors").that.is.an("array");
       expect(res.body.errors[0]).to.deep.equal({
         field: "status",
-        message: "Estado de reporte invalido",
+        message: "Estado de reporte inválido",
       });
     });
   });
@@ -382,7 +382,7 @@ describe("Admin API", () => {
       expect(res.body).to.have.property("message", "Reporte no encontrado");
     });
 
-    it("H7.5 - 400 con action invalida", async () => {
+    it("H7.5 - 400 con action inválida", async () => {
       const reportId = new mongoose.Types.ObjectId();
       const res = await request(app)
         .patch(`/api/admin/reports/${reportId}/resolve`)
@@ -393,7 +393,7 @@ describe("Admin API", () => {
       expect(res.body).to.have.property("errors").that.is.an("array");
       expect(res.body.errors[0]).to.deep.equal({
         field: "action",
-        message: "Accion invalida",
+        message: "Accion inválida",
       });
     });
 

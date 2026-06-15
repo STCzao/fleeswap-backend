@@ -8,7 +8,7 @@ const listarValidator = [
 const marcarLeidaValidator = [
   param("id")
     .isMongoId()
-    .withMessage("ID de notificacion invalido"),
+    .withMessage("ID de notificación inválido"),
 ];
 
 module.exports = {

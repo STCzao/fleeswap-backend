@@ -81,8 +81,8 @@ const createActiveSearchMatch = async ({ activeSearch, publication }) => {
   return createAndEmitNotification({
     user: activeSearch.user,
     type: NOTIFICATION_TYPES.ACTIVE_SEARCH_MATCH,
-    title: "Nueva coincidencia para tu busqueda",
-    message: `Se publico "${publication.title}" y coincide con uno de tus criterios activos.`,
+    title: "Nueva coincidencia para tu búsqueda",
+    message: `Se publicó "${publication.title}" y coincide con uno de tus criterios activos.`,
     dedupeKey: `active_search_match:${activeSearch._id}:${publication._id}`,
     publication: publication._id,
     activeSearch: activeSearch._id,

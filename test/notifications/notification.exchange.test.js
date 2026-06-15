@@ -14,7 +14,7 @@ const registrarUsuario = async (payload) => {
 
 const crearPublicacion = (overrides = {}) => ({
   title: "Objeto de prueba",
-  description: "Descripcion de prueba para el test",
+  description: "Descripción de prueba para el test",
   history: "Historia del objeto de prueba",
   category: "electronica",
   condition: "bueno",
@@ -75,7 +75,7 @@ describe("Exchange notification integration", function () {
     await mongoose.disconnect();
   });
 
-  it("crea una notificacion para el owner cuando recibe una solicitud", async () => {
+  it("crea una notificación para el owner cuando recibe una solicitud", async () => {
     const { owner, requester, pubOwner, pubRequester } = await crearEscenario("received");
 
     const res = await request(app)
@@ -98,7 +98,7 @@ describe("Exchange notification integration", function () {
     expect(notification.metadata.requesterName).to.equal("Requester NotifyTest");
   });
 
-  it("crea una notificacion para el requester cuando aceptan su solicitud", async () => {
+  it("crea una notificación para el requester cuando aceptan su solicitud", async () => {
     const { owner, requester, pubOwner, pubRequester } = await crearEscenario("accepted");
 
     const envio = await request(app)
@@ -125,7 +125,7 @@ describe("Exchange notification integration", function () {
     expect(notification.metadata.publicationOwnerName).to.equal("Owner NotifyTest");
   });
 
-  it("crea una notificacion para el requester cuando rechazan su solicitud", async () => {
+  it("crea una notificación para el requester cuando rechazan su solicitud", async () => {
     const { owner, requester, pubOwner, pubRequester } = await crearEscenario("rejected");
 
     const envio = await request(app)

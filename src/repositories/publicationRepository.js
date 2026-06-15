@@ -25,6 +25,12 @@ const findByOwner = (ownerId) =>
     .select("title photos type status createdAt")
     .sort({ createdAt: -1 });
 
+const findPublicAvailableByOwner = (ownerId, limit = 10) =>
+  Publication.find({ owner: ownerId, status: "available" })
+    .select("title photos type category condition status createdAt")
+    .sort({ createdAt: -1 })
+    .limit(limit);
+
 const findRecommendedByCategories = (ownerId, categories, limit) =>
   Publication.find({
     owner: { $ne: ownerId },
@@ -50,6 +56,7 @@ module.exports = {
   findAll,
   countAll,
   findByOwner,
+  findPublicAvailableByOwner,
   findRecommendedByCategories,
   updateById,
   incrementReportCount,

@@ -72,6 +72,26 @@ const findSentByRequester = (requesterId, statusFilter, { skip, limit }) =>
 const countSent = (requesterId, statusFilter) =>
   Exchange.countDocuments({ requester: requesterId, ...statusFilter });
 
+const findHistoryByUser = (userId, statusFilter, { skip, limit }) =>
+  Exchange.find({
+    $or: [{ requester: userId }, { owner: userId }],
+    ...statusFilter,
+  })
+    .populate("offeredPublication", "title photos category condition type")
+    .populate("requestedPublication", "title photos category condition type")
+    .populate("requester", "nombre apellido photo")
+    .populate("owner", "nombre apellido photo")
+    .select("+type")
+    .sort({ updatedAt: -1, createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+const countHistoryByUser = (userId, statusFilter) =>
+  Exchange.countDocuments({
+    $or: [{ requester: userId }, { owner: userId }],
+    ...statusFilter,
+  });
+
 const countCompletedByUser = (userId) =>
   Exchange.countDocuments({
     status: "completed",
@@ -99,6 +119,12 @@ const countCompletedPurchasesByUser = (userId) =>
     requester: userId,
   });
 
+const countCancelledByUser = (userId) =>
+  Exchange.countDocuments({
+    status: "cancelled",
+    $or: [{ requester: userId }, { owner: userId }],
+  });
+
 module.exports = {
   create,
   findById,
@@ -111,8 +137,11 @@ module.exports = {
   countReceived,
   findSentByRequester,
   countSent,
+  findHistoryByUser,
+  countHistoryByUser,
   countCompletedByUser,
   countCompletedExchangesByUser,
   countCompletedSalesByUser,
   countCompletedPurchasesByUser,
+  countCancelledByUser,
 };

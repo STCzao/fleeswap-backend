@@ -112,7 +112,7 @@ describe("Notification Socket", function () {
 
     const payload = await notificationReceived;
     expect(payload.type).to.equal("active_search_match");
-    expect(payload.title).to.equal("Nueva coincidencia para tu busqueda");
+    expect(payload.title).to.equal("Nueva coincidencia para tu búsqueda");
     expect(payload.metadata).to.include({
       publicationTitle: "Nintendo Switch OLED",
       publicationCategory: "electronica",

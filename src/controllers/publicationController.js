@@ -70,7 +70,7 @@ const listar = async (req, res, next) => {
 };
 
 // GET /api/publications/recommendations
-// Usa las categorias preferidas del usuario autenticado para devolver sugerencias para Home.
+// Usa las categorías preferidas del usuario autenticado para devolver sugerencias para Home.
 const recomendar = async (req, res, next) => {
   try {
     const limit = req.query.limit;

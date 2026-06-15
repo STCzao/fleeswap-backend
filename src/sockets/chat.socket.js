@@ -59,7 +59,7 @@ const registerChatHandlers = (io, socket) => {
       }
 
       // Solo intercambios "active" pueden unirse al chat en tiempo real.
-      // Completed/cancelled se leen via REST (GET /:id/messages), no via socket.
+      // Completed/cancelled se leen vía REST (GET /:id/messages), no vía socket.
       if (exchange.status !== "active") {
         return withAck(ack, { ok: false, error: "El chat no está disponible" });
       }

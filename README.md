@@ -1,23 +1,23 @@
 # Fleeswap Backend
 
-Backend de Fleeswap, una plataforma orientada a publicaciones de objetos, trueques entre usuarios, compras directas, mensajeria contextual y moderacion administrativa.
+Backend de Fleeswap, una plataforma orientada a publicaciones de objetos, trueques entre usuarios, compras directas, mensajería contextual y moderación administrativa.
 
-Fecha de esta documentacion: 5 de junio de 2026.
+Fecha de esta documentación: 5 de junio de 2026.
 
 ## Resumen Ejecutivo
 
-Este proyecto implementa una API REST sobre Node.js y Express, persistencia con MongoDB a traves de Mongoose, autenticacion basada en JWT con refresh token en cookie httpOnly, verificacion de email y chat en tiempo real con Socket.IO.
+Este proyecto implementa una API REST sobre Node.js y Express, persistencia con MongoDB a traves de Mongoose, autenticación basada en JWT con refresh token en cookie httpOnly, verificación de email y chat en tiempo real con Socket.IO.
 
 Hoy el backend ya expresa con claridad el dominio principal del producto:
 
-- Gestion de usuarios con perfil publico y privado.
-- Publicaciones con filtros, estados y reporte por moderacion.
+- Gestión de usuarios con perfil público y privado.
+- Publicaciones con filtros, estados y reporte por moderación.
 - Solicitudes de trueque y compra directa.
-- Flujo de aceptacion, rechazo, confirmacion y cancelacion de intercambios.
+- Flujo de aceptación, rechazo, confirmación y cancelación de intercambios.
 - Chat en tiempo real limitado al contexto de un intercambio activo.
-- Panel administrativo para usuarios, publicaciones, reportes y metricas.
+- Panel administrativo para usuarios, publicaciones, reportes y métricas.
 
-La base arquitectonica es buena: hay separacion por capas, reglas de negocio visibles en services, validaciones consistentes y varias decisiones correctas de seguridad. Al mismo tiempo, el proyecto todavia presenta deuda operativa y funcional que conviene tener explicitada. El detalle esta en [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
+La base arquitectónica es buena: hay separación por capas, reglas de negocio visibles en services, validaciones consistentes y varias decisiones correctas de seguridad. Al mismo tiempo, el proyecto todavía presenta deuda operativa y funcional que conviene tener explicitada. El detalle está en [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
 
 ## Stack Tecnologico
 
@@ -36,7 +36,7 @@ La base arquitectonica es buena: hay separacion por capas, reglas de negocio vis
 
 Fleeswap busca resolver un flujo de intercambio y/o venta de objetos entre personas, con foco en:
 
-- publicar objetos con historia, categoria y estado;
+- publicar objetos con historia, categoría y estado;
 - permitir propuestas entre usuarios sobre publicaciones disponibles;
 - soportar tanto trueque como compra directa;
 - habilitar comunicacion en tiempo real cuando una solicitud se activa;
@@ -47,105 +47,105 @@ Fleeswap busca resolver un flujo de intercambio y/o venta de objetos entre perso
 ### Funcionalidades implementadas
 
 - Registro y login de usuarios.
-- Verificacion de email y reenvio de verificacion.
-- Refresh token por cookie y cierre de sesion.
-- Cambio y recuperacion de contrasena.
-- Perfil propio y perfil publico.
+- Verificación de email y reenvio de verificación.
+- Refresh token por cookie y cierre de sesión.
+- Cambio y recuperación de contraseña.
+- Perfil propio y perfil público.
 - Actualizacion de perfil con foto, biografia y localidad.
-- Soft-delete de cuenta con ventana de recuperacion.
-- Alta, edicion, eliminacion, listado y detalle de publicaciones.
-- Reporte de publicaciones y suspension automatica por volumen de reportes.
+- Soft-delete de cuenta con ventana de recuperación.
+- Alta, edición, eliminación, listado y detalle de publicaciones.
+- Reporte de publicaciones y suspensión automática por volumen de reportes.
 - Solicitudes de intercambio y compra.
-- Gestion de bandeja de solicitudes recibidas y enviadas.
-- Confirmacion y cancelacion de intercambios.
+- Gestión de bandeja de solicitudes recibidas y enviadas.
+- Confirmación y cancelación de intercambios.
 - Chat por Socket.IO para intercambios activos.
-- Endpoints administrativos para usuarios, publicaciones, reportes y metricas.
-- Logging con `requestId` y trazabilidad basica por request.
+- Endpoints administrativos para usuarios, publicaciones, reportes y métricas.
+- Logging con `requestId` y trazabilidad básica por request.
 
 ### Funcionalidades parciales o pendientes
 
-- Perfil publico completo: hoy devuelve datos basicos e intercambios completados, pero no expone todavia publicaciones activas del usuario ni una reputacion real.
-- Sistema de reputacion: no existe aun el flujo de calificaciones, comentarios ni promedio real post-intercambio.
-- Preferencias de categorias y recomendaciones para Home: implementadas como HU complementaria de descubrimiento dentro de la Epica 5.
-- Busqueda activa y notificaciones: implementadas en backend a nivel MVP. El centro de notificaciones ya cubre coincidencias de busqueda activa y eventos clave de intercambio.
+- Perfil público completo: ya expone publicaciones activas, reputación promedio, calificaciones recibidas y cancelaciones.
+- Sistema de reputación: implementado con calificación post-intercambio, comentario, promedio real, ventana de 7 días e historial propio de intercambios.
+- Preferencias de categorías y recomendaciones para Home: implementadas como HU complementaria de descubrimiento dentro de la Épica 5.
+- Búsqueda activa y notificaciones: implementadas en backend a nivel MVP. El centro de notificaciones ya cubre coincidencias de búsqueda activa y eventos clave de intercambio.
 - Suite de tests: existe una base amplia y funcional, pero sigue dependiendo de un entorno externo y tiene tiempos de corrida altos.
-- Observabilidad y endurecimiento operativo: existe trazabilidad basica, pero no todavia una estrategia completa de metricas, alertas y auditoria.
+- Observabilidad y endurecimiento operativo: existe trazabilidad básica, pero no todavía una estrategia completa de métricas, alertas y auditoria.
 
-## Alineacion con el Backlog MVP
+## Alineación con el Backlog MVP
 
 Tomando como referencia el Product Backlog MVP, el backend actual se alinea de esta forma:
 
-- Epica 1 - Gestion de Usuarios y Perfiles: alineacion alta.
-- Epica 2 - Gestion de Publicaciones: alineacion alta.
-- Epica 3 - Sistema de Intercambio: alineacion alta.
-- Epica 4 - Chat en Tiempo Real: alineacion alta.
-- Epica 5 - Busqueda Activa y Notificaciones: implementada en backend a nivel MVP.
-- Epica 6 - Sistema de Reputacion: implementacion parcial.
+- Épica 1 - Gestión de Usuarios y Perfiles: alineación alta.
+- Épica 2 - Gestión de Publicaciones: alineación alta.
+- Épica 3 - Sistema de Intercambio: alineación alta.
+- Épica 4 - Chat en Tiempo Real: alineación alta.
+- Épica 5 - Búsqueda Activa y Notificaciones: implementada en backend a nivel MVP.
+- Épica 6 - Sistema de Reputación: implementada en backend a nivel MVP.
 
-### Detalle por epica
+### Detalle por épica
 
-#### Epica 1 - Gestion de Usuarios y Perfiles
+#### Épica 1 - Gestión de Usuarios y Perfiles
 
 Cobertura actual:
 
 - registro, login, refresh y logout;
-- verificacion y reenvio de verificacion de email;
-- cambio y recuperacion de contrasena;
+- verificación y reenvio de verificación de email;
+- cambio y recuperación de contraseña;
 - perfil propio;
-- edicion de perfil;
+- edición de perfil;
 - soft-delete con reactivacion en periodo de gracia.
 
 Desfasajes frente al backlog:
 
-- el perfil publico ya esta operativo como base funcional;
-- su enriquecimiento reputacional depende de la Epica 6.
+- el perfil público ya está operativo como base funcional;
+- su enriquecimiento reputacional ya se apoya en la Épica 6.
 
-#### Epica 2 - Gestion de Publicaciones
+#### Épica 2 - Gestión de Publicaciones
 
 Cobertura actual:
 
 - crear, editar, eliminar y cambiar estado;
-- ver detalle y listado publico;
-- filtros por categoria, tipo, condicion y texto;
+- ver detalle y listado público;
+- filtros por categoría, tipo, condicion y texto;
 - reporte de publicaciones con bloqueo de duplicados;
-- suspension automatica por umbral de reportes.
+- suspensión automática por umbral de reportes.
 
 Observacion:
 
-- esta es una de las epicas mas alineadas con el backlog del MVP.
+- esta es una de las epicas más alineadas con el backlog del MVP.
 
-#### Epica 3 - Sistema de Intercambio
+#### Épica 3 - Sistema de Intercambio
 
 Cobertura actual:
 
 - envio de solicitudes de trueque y compra;
 - bandejas de recibidas y enviadas;
-- aceptacion y rechazo;
-- confirmacion de intercambio o venta;
-- cancelacion de solicitudes pendientes o activas.
+- aceptación y rechazo;
+- confirmación de intercambio o venta;
+- cancelación de solicitudes pendientes o activas.
 
 Reglas ya cubiertas:
 
 - no autointercambio/autocompra;
-- no duplicados activos por requester y publicacion;
-- doble confirmacion en trueque;
-- rechazo automatico de solicitudes pendientes relacionadas al cerrar una operacion.
+- no duplicados activos por requester y publicación;
+- doble confirmación en trueque;
+- rechazo automático de solicitudes pendientes relacionadas al cerrar una operación.
 
-#### Epica 4 - Chat en Tiempo Real
+#### Épica 4 - Chat en Tiempo Real
 
 Cobertura actual:
 
 - acceso al chat solo para participantes;
-- habilitacion del chat solo cuando el intercambio esta `active`;
-- mensajeria en tiempo real con Socket.IO;
+- habilitación del chat solo cuando el intercambio está `active`;
+- mensajería en tiempo real con Socket.IO;
 - historial accesible por REST para intercambios cerrados;
 - paso a modo solo lectura al completar o cancelar.
 
 Observacion:
 
-- la arquitectura de sockets esta centrada hoy exclusivamente en chat, no en notificaciones de producto.
+- la arquitectura de sockets está centrada hoy exclusivamente en chat, no en notificaciones de producto.
 
-#### Epica 5 - Busqueda Activa y Notificaciones
+#### Épica 5 - Búsqueda Activa y Notificaciones
 
 Estado actual:
 
@@ -153,46 +153,45 @@ Estado actual:
 
 Cobertura actual:
 
-- descubrimiento por categorias preferidas para Home;
-- creacion y gestion de busquedas activas;
-- matching automatico por coincidencia al crear publicaciones;
+- descubrimiento por categorías preferidas para Home;
+- creación y gestión de búsquedas activas;
+- matching automático por coincidencia al crear publicaciones;
 - notificaciones persistentes y realtime;
 - centro de notificaciones con historial y estado de lectura;
-- inclusion de eventos de intercambio clave en el mismo centro.
+- inclusión de eventos de intercambio clave en el mismo centro.
 
 Salvedad operativa:
 
-- la suite automatizada que valida estos flujos sigue condicionada por el entorno externo de MongoDB, por lo que la verificacion integrada completa no siempre queda disponible en esta instancia.
+- la suite automatizada que valida estos flujos sigue condicionada por el entorno externo de MongoDB, por lo que la verificación integrada completa no siempre queda disponible en esta instancia.
 
-#### Epica 6 - Sistema de Reputacion
+#### Épica 6 - Sistema de Reputación
 
 Cobertura actual:
 
 - se cuenta la cantidad de intercambios completados por usuario;
-- ese dato ya puede mostrarse en perfil.
+- se pueden registrar calificaciones de 1 a 5 con comentario sobre intercambios completados;
+- cada participante puede calificar una sola vez por intercambio;
+- existe una ventana de 7 días post-intercambio para calificar;
+- el perfil público expone promedio real, total de calificaciones, calificaciones recibidas, publicaciones activas y cancelaciones;
+- el usuario autenticado puede consultar su historial de intercambios pendientes, activos, completados y cancelados.
 
 Pendientes frente al backlog:
 
-- calificacion de 1 a 5 y comentario;
-- plazo de 7 dias post-intercambio;
-- promedio real de reputacion;
-- listado de calificaciones recibidas;
-- cantidad de cancelaciones en perfil;
-- historial completo de intercambios como funcionalidad dedicada de usuario.
+- validar con frontend el contrato final de visualización del historial y reputación.
 
 ## Arquitectura
 
-La aplicacion sigue una estructura en capas:
+La aplicación sigue una estructura en capas:
 
 - `src/routes`: define el contrato HTTP.
 - `src/controllers`: adapta request/response y delega.
 - `src/services`: contiene reglas de negocio.
 - `src/repositories`: encapsula acceso a datos con Mongoose.
 - `src/models`: esquemas y restricciones de persistencia.
-- `src/middlewares`: autenticacion, autorizacion, validacion, contexto de request y manejo de errores.
+- `src/middlewares`: autenticación, autorizacion, validación, contexto de request y manejo de errores.
 - `src/helpers`: utilidades transversales.
-- `src/sockets`: autenticacion socket y handlers de chat.
-- `test`: suite automatizada por modulos funcionales.
+- `src/sockets`: autenticación socket y handlers de chat.
+- `test`: suite automatizada por módulos funcionales.
 
 ### Flujo de request
 
@@ -202,7 +201,7 @@ La aplicacion sigue una estructura en capas:
 4. El repository interactua con MongoDB.
 5. Los errores operacionales se convierten en respuestas HTTP mediante `errorHandler`.
 
-### Principios que ya se observan en el codigo
+### Principios que ya se observan en el código
 
 - Controllers livianos.
 - Services con responsabilidad de negocio.
@@ -242,11 +241,11 @@ La base de seguridad actual incluye:
 
 - `helmet` para headers de seguridad;
 - control de `cors` por lista de origenes permitidos;
-- sanitizacion basica de `req.body` frente a NoSQL injection;
+- sanitizacion básica de `req.body` frente a NoSQL injection;
 - JWT para access token;
 - refresh token en cookie `httpOnly`;
 - refresh token hasheado en base;
-- verificacion de email por token;
+- verificación de email por token;
 - validaciones exhaustivas en capa HTTP;
 - middleware de rol para rutas administrativas;
 - hash dummy en login para reducir timing attacks;
@@ -299,10 +298,16 @@ La base de seguridad actual incluye:
 - `PATCH /api/notifications/:id/read`
 - `PATCH /api/notifications/read-all`
 
+### Reviews
+
+- `POST /api/reviews`
+- `GET /api/reviews/received`
+
 ### Exchanges
 
 - `GET /api/exchanges/received`
 - `GET /api/exchanges/sent`
+- `GET /api/exchanges/history`
 - `GET /api/exchanges/:id`
 - `GET /api/exchanges/:id/messages`
 - `POST /api/exchanges`
@@ -326,7 +331,7 @@ La base de seguridad actual incluye:
 
 ## Eventos de Socket.IO
 
-Autenticacion:
+Autenticación:
 
 - el cliente debe enviar el access token en `handshake.auth.token`.
 
@@ -340,16 +345,16 @@ Eventos soportados:
 
 Entrega actual de notificaciones:
 
-- persistencia en base de datos para coincidencias de busqueda activa;
-- emision realtime a la room privada `user:<userId>` si el usuario esta conectado.
-- el matching actual se dispara solo al crear una publicacion nueva disponible;
+- persistencia en base de datos para coincidencias de búsqueda activa;
+- emision realtime a la room privada `user:<userId>` si el usuario está conectado.
+- el matching actual se dispara solo al crear una publicación nueva disponible;
 - las keywords se comparan contra `title`, `description` e `history`;
-- una misma publicacion notifica una sola vez por `user + activeSearch`.
-- el centro de notificaciones permite listar por fecha descendente y marcar una o todas como leidas.
+- una misma publicación notifica una sola vez por `user + activeSearch`.
+- el centro de notificaciones permite listar por fecha descendente y marcar una o todas como leídas.
 
 ## Variables de Entorno
 
-Las variables observadas en el codigo son:
+Las variables observadas en el código son:
 
 ```env
 PORT=
@@ -396,7 +401,7 @@ npm start
 npm test
 ```
 
-### Mantenimiento de busquedas activas
+### Mantenimiento de búsquedas activas
 
 Si existen criterios legacy creados antes de `criteriaSignature`, se puede ejecutar:
 
@@ -414,21 +419,26 @@ npm run backfill:notifications
 
 El proyecto cuenta con tests para:
 
-- autenticacion;
+- autenticación;
 - publicaciones;
 - intercambios;
 - chat;
-- administracion.
+- administración;
+- búsquedas activas;
+- notificaciones;
+- reputación.
 
-La base ya no esta rota por imports inconsistentes. Aun asi, la corrida completa sigue dependiendo de un entorno externo de MongoDB y puede resultar lenta para feedback rapido.
+La base ya no está rota por imports inconsistentes. Aun así, la corrida completa sigue dependiendo de un entorno externo de MongoDB y puede resultar lenta para feedback rápido.
+
+Para detalle de comandos, mapa de suites, pruebas manuales con Postman, convenciones y cobertura por épica, ver [docs/TESTING.md](docs/TESTING.md).
 
 ## Situacion Actual
 
 En terminos de madurez, el backend hoy se encuentra en una etapa intermedia-avanzada:
 
-- el dominio principal ya esta construido;
+- el dominio principal ya está construido;
 - la arquitectura es saludable;
-- la logica de negocio mas importante ya existe;
-- todavia hay deuda tecnica y funcional que conviene atacar antes de considerar el backend como estable para produccion.
+- la lógica de negocio más importante ya existe;
+- todavía hay deuda técnica y funcional que conviene atacar antes de considerar el backend como estable para producción.
 
 Para una lectura detallada del estado real del proyecto, ver [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).

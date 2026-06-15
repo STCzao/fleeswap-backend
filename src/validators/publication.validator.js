@@ -102,7 +102,7 @@ const cambiarEstadoValidator = [
 ];
 
 const eliminarValidator = [
-  body("confirmacion")
+  body("confirmación")
     .custom((val) => val === true)
     .withMessage("Se requiere confirmación para eliminar"),
 ];

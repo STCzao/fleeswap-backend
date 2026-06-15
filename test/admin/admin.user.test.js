@@ -35,8 +35,8 @@ async function crearUsuarioConToken(overrides = {}) {
  */
 async function crearPublicacion(ownerId, overrides = {}) {
   return Publication.create({
-    title: "Publicacion de prueba",
-    description: "Descripcion de prueba para testing.",
+    title: "Publicación de prueba",
+    description: "Descripción de prueba para testing.",
     history: "Historia de prueba para testing.",
     category: "electronica",
     condition: "nuevo",

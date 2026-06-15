@@ -64,7 +64,7 @@ const findByVerificationToken = (verificationTokenHash) =>
     verificationTokenExpiry: { $gt: new Date() },
   }).select("+verificationToken");
 
-// Limpia el reset token después de un reset exitoso — invalida el link.
+// Limpia el reset token después de un reset exitoso — inválida el link.
 const limpiarResetToken = (id) =>
   User.findByIdAndUpdate(id, { resetToken: null, resetTokenExpiry: null });
 

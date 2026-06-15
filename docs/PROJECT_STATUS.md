@@ -4,30 +4,30 @@ Fecha de referencia: 5 de junio de 2026.
 
 ## Objetivo de Este Documento
 
-Este documento resume donde se encuentra hoy el backend desde una perspectiva tecnica y de producto. No intenta definir la solucion de los proximos problemas, sino dejar una fotografia clara, profesional y accionable del estado actual.
+Este documento resume donde se encuentra hoy el backend desde una perspectiva técnica y de producto. No intenta definir la solucion de los proximos problemas, sino dejar una fotografia clara, profesional y accionable del estado actual.
 
 ## Diagnostico General
 
-El proyecto tiene una base de arquitectura correcta y expresa bien su dominio. No es un backend improvisado: hay estructura por capas, validaciones, reglas de negocio razonables, soporte de moderacion, autenticacion con rotacion de tokens, verificacion de email y una suite de tests pensada por modulos.
+El proyecto tiene una base de arquitectura correcta y expresa bien su dominio. No es un backend improvisado: hay estructura por capas, validaciones, reglas de negocio razonables, soporte de moderación, autenticación con rotación de tokens, verificación de email y una suite de tests pensada por módulos.
 
 La conclusion principal es:
 
-- la direccion tecnica es buena;
+- la dirección técnica es buena;
 - el producto backend ya tiene forma real;
-- la confiabilidad operativa mejoro, pero todavia no acompana completamente al diseno.
+- la confiabilidad operativa mejoro, pero todavía no acompana completamente al diseño.
 
 ## Lectura Contra el Backlog MVP
 
-Contrastado contra el Product Backlog del MVP, la foto mas precisa es esta:
+Contrastado contra el Product Backlog del MVP, la foto más precisa es está:
 
-- Epica 1: alineada.
-- Epica 2: alineada.
-- Epica 3: alineada.
-- Epica 4: alineada.
-- Epica 5: implementada en backend a nivel MVP.
-- Epica 6: parcial.
+- Épica 1: alineada.
+- Épica 2: alineada.
+- Épica 3: alineada.
+- Épica 4: alineada.
+- Épica 5: implementada en backend a nivel MVP.
+- Épica 6: implementada en backend a nivel MVP.
 
-Esto cambia una interpretacion importante del proyecto: el backend no esta atrasado en su nucleo transaccional, pero el MVP backlog completo aun no esta cerrado principalmente por la Epica 6 y por la dependencia operativa de integraciones y entorno de test.
+Esto cambia una interpretación importante del proyecto: el backend no está atrasado en su núcleo transaccional y la Épica 6 ya tiene cobertura MVP. El cierre completo del proyecto depende ahora sobre todo de validación de contrato con frontend y de la deuda operativa alrededor de integraciones y entorno de test.
 
 ## Lo Mas Solido Hoy
 
@@ -41,11 +41,11 @@ El proyecto ya representa con claridad sus entidades principales:
 - mensajes;
 - reportes.
 
-Esto hace que el codigo sea entendible y que las reglas de negocio no esten dispersas.
+Esto hace que el código sea entendible y que las reglas de negocio no esten dispersas.
 
-### 2. Separacion de responsabilidades
+### 2. Separación de responsabilidades
 
-La estructura `routes -> controllers -> services -> repositories -> models` esta bien definida. En general:
+La estructura `routes -> controllers -> services -> repositories -> models` está bien definida. En general:
 
 - las rutas solo orquestan validaciones y middlewares;
 - los controllers permanecen delgados;
@@ -54,7 +54,7 @@ La estructura `routes -> controllers -> services -> repositories -> models` esta
 
 Esta base facilita mantenimiento, refactor y cobertura de tests.
 
-### 3. Seguridad por encima del promedio de un CRUD basico
+### 3. Seguridad por encima del promedio de un CRUD básico
 
 Puntos positivos observados:
 
@@ -64,23 +64,23 @@ Puntos positivos observados:
 - cookie `httpOnly`;
 - uso de `helmet`;
 - control de CORS;
-- validacion de payloads;
+- validación de payloads;
 - mitigacion de timing attacks en login;
-- verificacion de email con token y expiracion;
+- verificación de email con token y expiración;
 - middleware de autorizacion por rol;
-- soft-delete con revocacion de sesion.
+- soft-delete con revocacion de sesión.
 
 ### 4. Reglas de negocio ya maduras
 
 Hay reglas que muestran criterio de producto:
 
 - bloqueo de autointercambio y autocompra;
-- doble confirmacion para trueques;
-- rechazo automatico de solicitudes pendientes relacionadas tras completar una operacion;
-- suspension automatica de publicaciones por reportes;
+- doble confirmación para trueques;
+- rechazo automático de solicitudes pendientes relacionadas tras completar una operación;
+- suspensión automática de publicaciones por reportes;
 - chat habilitado solo cuando el intercambio realmente avanza.
 
-### 5. Observabilidad basica ya presente
+### 5. Observabilidad básica ya presente
 
 Hoy el backend ya cuenta con una base inicial de observabilidad:
 
@@ -88,7 +88,7 @@ Hoy el backend ya cuenta con una base inicial de observabilidad:
 - `requestId` por request;
 - header `X-Request-Id`;
 - logs de request con duracion;
-- errores logueados con contexto minimo.
+- errores logueados con contexto mínimo.
 
 No resuelve todo el frente operativo, pero ya no depende solo de `console.log`.
 
@@ -96,15 +96,15 @@ No resuelve todo el frente operativo, pero ya no depende solo de `console.log`.
 
 ### 1. La suite de tests existe, pero sigue siendo costosa de operar
 
-La base de tests ya no esta rota por imports relativos y cubre modulos reales del dominio. Aun asi, la confiabilidad de la corrida completa sigue dependiendo de un entorno externo de MongoDB y de tiempos de ejecucion altos.
+La base de tests ya no está rota por imports relativos y cubre módulos reales del dominio. Aun así, la confiabilidad de la corrida completa sigue dependiendo de un entorno externo de MongoDB y de tiempos de ejecucion altos.
 
 Impacto:
 
-- hay una base automatizada util para regresion;
-- sigue habiendo friccion operacional para usarla como feedback rapido;
+- hay una base automatizada útil para regresion;
+- sigue habiendo friccion operacional para usarla como feedback rápido;
 - conviene seguir trabajando en estabilidad y velocidad de la suite.
 
-### 2. Perfil publico y reputacion todavia no muestran el enriquecimiento previsto para Epica 6
+### 2. Perfil público y reputación ya muestran el enriquecimiento previsto para Épica 6
 
 El backend ya puede devolver:
 
@@ -112,65 +112,65 @@ El backend ya puede devolver:
 - fecha de alta;
 - cantidad de intercambios completados.
 
-Pero todavia no devuelve de forma real:
+Hoy ya devuelve de forma real:
 
-- publicaciones activas del usuario en su perfil publico;
-- reputacion promedio calculada;
+- publicaciones activas del usuario en su perfil público;
+- reputación promedio calculada;
 - calificaciones recibidas;
 - cantidad de cancelaciones.
 
 Impacto:
 
-- la Epica 1 puede considerarse cerrada como base funcional de perfiles;
-- la Epica 6 todavia no puede considerarse implementada;
-- la documentacion debe evitar dar a entender que la reputacion ya existe como funcionalidad cerrada.
+- la Épica 1 puede considerarse cerrada como base funcional de perfiles;
+- la Épica 6 ya cuenta con una base backend coherente a nivel MVP;
+- la documentación debe distinguir entre backend implementado y validación final de contrato con frontend.
 
-### 3. Busqueda activa y notificaciones estan implementadas en backend a nivel MVP
+### 3. Búsqueda activa y notificaciones están implementadas en backend a nivel MVP
 
-El backlog del MVP contempla busqueda activa, matching automatico al crear publicaciones, entrega en tiempo real e historial persistente de notificaciones. Hoy esa base ya esta implementada en backend y se apoya ademas en un slice complementario de descubrimiento: preferencias de categorias en perfil y recomendaciones para Home.
+El backlog del MVP contempla búsqueda activa, matching automático al crear publicaciones, entrega en tiempo real e historial persistente de notificaciones. Hoy esa base ya está implementada en backend y se apoya además en un slice complementario de descubrimiento: preferencias de categorías en perfil y recomendaciones para Home.
 
 Cobertura actual:
 
-- preferencias de categorias persistidas en el usuario;
+- preferencias de categorías persistidas en el usuario;
 - endpoint de recomendaciones para carrusel Home;
-- busqueda activa como entidad propia;
+- búsqueda activa como entidad propia;
 - multiples criterios por usuario;
 - activacion y desactivacion de criterios sin eliminarlos;
-- matching automatico por categoria, palabras clave y tipo;
+- matching automático por categoría, palabras clave y tipo;
 - notificaciones persistentes;
 - entrega de notificaciones en tiempo real;
 - centro de notificaciones con historial y estado de lectura;
-- inclusion de eventos clave de intercambio dentro del mismo centro.
+- inclusión de eventos clave de intercambio dentro del mismo centro.
 
 Impacto:
 
-- la Epica 5 ya no esta en estado inicial;
+- la Épica 5 ya no está en estado inicial;
 - el alcance principal del backend ya fue implementado;
-- el centro de notificaciones ya cubre coincidencias de busqueda activa y eventos clave de intercambio;
+- el centro de notificaciones ya cubre coincidencias de búsqueda activa y eventos clave de intercambio;
 - queda como un cierre backend coherente a nivel MVP.
 
 Lectura de cierre sugerida:
 
-- descubrimiento por categorias preferidas para Home;
-- creacion y gestion de busquedas activas;
-- matching automatico por coincidencia al crear publicaciones;
+- descubrimiento por categorías preferidas para Home;
+- creación y gestión de búsquedas activas;
+- matching automático por coincidencia al crear publicaciones;
 - notificaciones persistentes y realtime;
 - centro de notificaciones con historial y estado de lectura;
-- inclusion de eventos de intercambio clave en el mismo centro.
+- inclusión de eventos de intercambio clave en el mismo centro.
 
 Salvedad operativa:
 
-- la suite automatizada que valida estos flujos sigue condicionada por el entorno externo de MongoDB, por lo que la verificacion integrada completa no siempre queda disponible en esta instancia.
+- la suite automatizada que valida estos flujos sigue condicionada por el entorno externo de MongoDB, por lo que la verificación integrada completa no siempre queda disponible en esta instancia.
 
-### Detalle actual de las HU de Epica 5
+### Detalle actual de las HU de Épica 5
 
-- `HU5.0` Descubrimiento por preferencias de categorias.
+- `HU5.0` Descubrimiento por preferencias de categorías.
   Estado: implementada en backend.
-- `HU5.1` Crear criterio de busqueda activa.
+- `HU5.1` Crear criterio de búsqueda activa.
   Estado: implementada en backend.
-- `HU5.2` Gestionar busquedas activas.
+- `HU5.2` Gestionar búsquedas activas.
   Estado: implementada en backend.
-- `HU5.3` Recibir notificacion por coincidencia.
+- `HU5.3` Recibir notificación por coincidencia.
   Estado: implementada en backend.
 - `HU5.4` Centro de notificaciones.
   Estado: implementada en backend.
@@ -180,15 +180,15 @@ Cobertura actual de `H5.3`:
 - el matching corre solo al crear publicaciones nuevas;
 - solo procesa publicaciones `available`;
 - compara keywords contra `title`, `description` e `history`;
-- no notifica al owner de su propia publicacion;
-- deduplica a una notificacion por `user + activeSearch + publication + type`.
+- no notifica al owner de su propia publicación;
+- deduplica a una notificación por `user + activeSearch + publication + type`.
 
 Cobertura actual de `H5.4`:
 
 - `GET /api/notifications` devuelve historial paginado del usuario;
-- incluye `unreadCount` para distinguir leidas y no leidas;
-- `PATCH /api/notifications/:id/read` marca una notificacion puntual como leida;
-- `PATCH /api/notifications/read-all` marca todas las no leidas del usuario;
+- incluye `unreadCount` para distinguir leídas y no leídas;
+- `PATCH /api/notifications/:id/read` marca una notificación puntual como leida;
+- `PATCH /api/notifications/read-all` marca todas las no leídas del usuario;
 - el centro cubre `active_search_match`, `exchange_request_received`, `exchange_request_accepted` y `exchange_request_rejected`.
 
 Endurecimientos finales aplicados:
@@ -196,23 +196,23 @@ Endurecimientos finales aplicados:
 - `dedupeKey` autogenerada para notificaciones nuevas cuando el evento lo permite;
 - indice parcial para compatibilidad con datos legacy;
 - script de backfill para completar `dedupeKey` en notificaciones existentes;
-- payload de intercambio enriquecido con categoria y tipo reales de la publicacion solicitada;
+- payload de intercambio enriquecido con categoría y tipo reales de la publicación solicitada;
 - test realtime adicional para `exchange_request_received`.
 
-### 4. Endurecimiento operacional todavia limitado
+### 4. Endurecimiento operacional todavía limitado
 
-Si bien ya existe trazabilidad basica por request, todavia no se observa:
+Si bien ya existe trazabilidad básica por request, todavía no se observa:
 
 - monitoreo estructurado;
 - alertas;
-- metricas de negocio;
-- auditoria mas robusta;
+- métricas de negocio;
+- auditoria más robusta;
 - tableros operativos.
 
 Impacto:
 
-- operar incidentes sigue siendo mas costoso de lo deseable;
-- el proyecto todavia depende bastante del conocimiento del equipo.
+- operar incidentes sigue siendo más costoso de lo deseable;
+- el proyecto todavía depende bastante del conocimiento del equipo.
 
 ### 5. Integraciones externas siguen siendo un riesgo operativo
 
@@ -222,13 +222,13 @@ El sistema depende de:
 - Resend;
 - Cloudinary.
 
-La integracion esta encapsulada y hoy tiene mejores defaults de arranque, pero aun conviene endurecer manejo de errores, fallback y visibilidad operativa.
+La integracion está encapsulada y hoy tiene mejores defaults de arranque, pero aún conviene endurecer manejo de errores, fallback y visibilidad operativa.
 
 ## Riesgos Tecnicos Relevantes
 
 ### Confiabilidad
 
-El mayor riesgo de corto plazo ya no es la ausencia total de tests, sino la dificultad de correr la suite completa con feedback rapido y consistente.
+El mayor riesgo de corto plazo ya no es la ausencia total de tests, sino la dificultad de correr la suite completa con feedback rápido y consistente.
 
 ### Consistencia transaccional
 
@@ -236,42 +236,42 @@ Algunos flujos criticos usan transacciones en admin, lo cual es positivo. Pero n
 
 ### Integraciones externas
 
-La salud del sistema todavia depende fuertemente de infraestructura y proveedores externos.
+La salud del sistema todavía depende fuertemente de infraestructura y proveedores externos.
 
 ## Nivel de Madurez Actual
 
 Si hubiera que clasificar el backend en una escala practica:
 
-- no esta en etapa inicial;
-- no esta listo para llamarlo completamente estabilizado;
-- si esta en una etapa funcional avanzada con deuda tecnica visible.
+- no está en etapa inicial;
+- no está listo para llamarlo completamente estabilizado;
+- si está en una etapa funcional avanzada con deuda técnica visible.
 
 En otras palabras:
 
 - ya sirve como base seria del producto;
-- todavia necesita una ronda de consolidacion.
+- todavía necesita una ronda de consolidacion.
 
 ## Lectura Recomendada del Momento Actual
 
-La forma mas honesta de describir donde estamos es esta:
+La forma más honesta de describir donde estamos es está:
 
 1. El proyecto ya tiene arquitectura y dominio suficientemente claros como para crecer sin reescritura completa.
-2. El backend soporta bien los casos nucleares de publicaciones, intercambio, chat y autenticacion.
-3. El backlog MVP todavia no esta completamente materializado principalmente por la parcialidad de Epica 6 y por deuda operativa alrededor del entorno de validacion.
-4. La siguiente etapa deberia combinar dos frentes: cerrar el alcance funcional faltante y consolidar confianza tecnica.
+2. El backend soporta bien los casos nucleares de publicaciones, intercambio, chat y autenticación.
+3. El backlog MVP backend ya cubre la Épica 6 a nivel funcional, y el foco pendiente pasa por validación de contrato y deuda operativa alrededor del entorno de validación.
+4. La siguiente etapa deberia combinar dos frentes: cerrar el alcance funcional faltante y consolidar confianza técnica.
 
 ## Prioridades Naturales para la Proxima Etapa
 
-Sin entrar todavia en plan de arreglos, la siguiente etapa del proyecto deberia enfocarse en:
+Sin entrar todavía en plan de arreglos, la siguiente etapa del proyecto deberia enfocarse en:
 
 - estabilizar y acelerar la suite automatizada;
-- cerrar los faltantes funcionales de Epica 6;
+- validar el contrato final de frontend para reputación e historial de Épica 6;
 - fortalecer observabilidad y disciplina operativa;
 - endurecer integraciones externas y fallback;
 - limpiar pequenas inconsistencias documentales que sigan apareciendo.
 
 ## Conclusion
 
-El backend de Fleeswap tiene una base tecnica real, decisiones de negocio coherentes y un nucleo funcional bien encaminado para el MVP. La lectura correcta no es que falte rehacer el producto, sino que falta cerrar de forma honesta el alcance comprometido del backlog y seguir consolidando su operacion.
+El backend de Fleeswap tiene una base técnica real, decisiones de negocio coherentes y un nucleo funcional bien encaminado para el MVP. La lectura correcta no es que falte rehacer el producto, sino que falta cerrar de forma honesta el alcance comprometido del backlog y seguir consolidando su operación.
 
 Ese es exactamente el lugar en el que se encuentra hoy el proyecto.
