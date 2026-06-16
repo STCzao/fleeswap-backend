@@ -179,6 +179,13 @@ Pendientes frente al backlog:
 
 - validar con frontend el contrato final de visualización del historial y reputación.
 
+Historias correctivas incorporadas:
+
+- `HU6.4` Historial completo de chat:
+  asegurar visualización íntegra del historial con orden cronológico correcto, soporte de carga incremental y estabilidad de rendimiento en conversaciones extensas.
+- `HU6.5` Bloqueo por publicación reportada:
+  cuando una publicación entra en revisión, deben bloquearse temporalmente nuevas solicitudes, aceptación de solicitudes existentes y uso del chat asociado hasta resolución administrativa.
+
 ## Arquitectura
 
 La aplicación sigue una estructura en capas:

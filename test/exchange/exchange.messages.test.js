@@ -328,4 +328,53 @@ describe("Exchange Messages API", () => {
 
   });
 
+  describe("GET /api/exchanges/:id/messages - Historial paginado", () => {
+
+    let escenario;
+    let mensajeIds = [];
+
+    afterEach(async () => {
+      await Message.deleteMany({ _id: { $in: mensajeIds } });
+      await limpiarEscenario(escenario ?? {});
+      mensajeIds = [];
+    });
+
+    it("permite cargar mensajes antiguos con cursor sin perder el orden cronológico", async () => {
+      escenario = await crearEscenarioActivo("historial-paginado");
+
+      const mensajes = await Message.insertMany(
+        Array.from({ length: 60 }, (_, index) => ({
+          exchangeId: escenario.exchange._id,
+          senderId: escenario.requesterData.userId,
+          content: `Mensaje ${String(index + 1).padStart(2, "0")}`,
+        })),
+      );
+      mensajeIds = mensajes.map((mensaje) => mensaje._id);
+
+      const primeraPagina = await request(app)
+        .get(`/api/exchanges/${escenario.exchange._id}/messages`)
+        .query({ limit: 20 })
+        .set("Authorization", `Bearer ${escenario.requesterData.token}`);
+
+      expect(primeraPagina.status).to.equal(200);
+      expect(primeraPagina.body.messages).to.have.lengthOf(20);
+      expect(primeraPagina.body.hasMore).to.equal(true);
+      expect(primeraPagina.body.messages[0].content).to.equal("Mensaje 41");
+      expect(primeraPagina.body.messages[19].content).to.equal("Mensaje 60");
+
+      const before = primeraPagina.body.messages[0]._id;
+      const segundaPagina = await request(app)
+        .get(`/api/exchanges/${escenario.exchange._id}/messages`)
+        .query({ limit: 20, before })
+        .set("Authorization", `Bearer ${escenario.requesterData.token}`);
+
+      expect(segundaPagina.status).to.equal(200);
+      expect(segundaPagina.body.messages).to.have.lengthOf(20);
+      expect(segundaPagina.body.hasMore).to.equal(true);
+      expect(segundaPagina.body.messages[0].content).to.equal("Mensaje 21");
+      expect(segundaPagina.body.messages[19].content).to.equal("Mensaje 40");
+    });
+
+  });
+
 });

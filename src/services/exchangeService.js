@@ -7,6 +7,8 @@ const AppError = require("../helpers/AppError");
 const logger = require("../helpers/logger");
 const { getIO } = require("../sockets");
 
+const BLOQUEO_PUBLICACION = "suspended";
+
 const notifyBestEffort = async (action, meta, fn) => {
   try {
     await fn();
@@ -16,6 +18,16 @@ const notifyBestEffort = async (action, meta, fn) => {
       error: error.message,
       stack: error.stack,
     });
+  }
+};
+
+const tienePublicacionBloqueada = (exchange) =>
+  exchange.requestedPublication?.status === BLOQUEO_PUBLICACION ||
+  exchange.offeredPublication?.status === BLOQUEO_PUBLICACION;
+
+const validarPublicacionesNoBloqueadas = (exchange) => {
+  if (tienePublicacionBloqueada(exchange)) {
+    throw new AppError("La publicación está bloqueada por revisión", 409);
   }
 };
 
@@ -215,6 +227,8 @@ const aceptarSolicitud = async (ownerId, exchangeId) => {
   if (exchange.status !== "pending") {
     throw new AppError("La solicitud no está en estado pendiente", 400);
   }
+
+  validarPublicacionesNoBloqueadas(exchange);
 
   const updatedExchange = await exchangeRepository.updateStatusById(exchangeId, "active");
   const requestedPublicationId = exchange.requestedPublication._id;

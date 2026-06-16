@@ -270,6 +270,21 @@ Sin entrar todavía en plan de arreglos, la siguiente etapa del proyecto deberia
 - endurecer integraciones externas y fallback;
 - limpiar pequenas inconsistencias documentales que sigan apareciendo.
 
+## Ajustes Recientes del Backlog
+
+Se incorporaron dos historias correctivas dentro de la Épica 6, aunque en la práctica corrigen comportamiento transversal del módulo de intercambio/chat y del flujo de moderación:
+
+- `HU6.4` Historial completo de chat:
+  asegurar visualización íntegra del historial, orden cronológico correcto, carga incremental y rendimiento estable cuando un chat acumula muchos mensajes.
+- `HU6.5` Bloqueo por publicación reportada:
+  cuando una publicación entra en revisión, deben bloquearse temporalmente nuevas solicitudes, aceptación de solicitudes existentes y uso del chat asociado hasta resolución administrativa.
+
+Impacto documental:
+
+- estas historias no reemplazan el alcance original de reputación, sino que consolidan dos fallas detectadas en otras épicas;
+- el cierre backend ya no debe medirse solo por reputación/historial, sino también por robustez de chat y coherencia del flujo de moderación;
+- la próxima actualización de estado deberá distinguir con claridad entre cobertura funcional existente y endurecimientos pendientes sobre volumen de mensajes y bloqueo operativo por revisión.
+
 ## Conclusion
 
 El backend de Fleeswap tiene una base técnica real, decisiones de negocio coherentes y un nucleo funcional bien encaminado para el MVP. La lectura correcta no es que falte rehacer el producto, sino que falta cerrar de forma honesta el alcance comprometido del backlog y seguir consolidando su operación.

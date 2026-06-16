@@ -9,7 +9,8 @@ const AppError = require("../helpers/AppError");
 
 // A partir de este número de reportes la publicación se suspende automáticamente,
 // sin intervencion del admin. El admin puede reactivarla manualmente si lo considera necesario.
-const REPORT_THRESHOLD = 5;
+const REPORTED_STATUS = "suspended";
+// Estado usado para bloquear una publicación apenas recibe un reporte pendiente.
 
 const crear = async (
   ownerId,
@@ -141,11 +142,8 @@ const reportar = async (publicationId, reporterId, reason, details) => {
   await reportRepository.create({ publicationId, reporterId, reason, details });
 
   const updatedPublication = await publicationRepository.incrementReportCount(publicationId);
-  if (
-    updatedPublication.reportCount >= REPORT_THRESHOLD &&
-    updatedPublication.status !== "suspended"
-  ) {
-    await publicationRepository.updateById(publicationId, { status: "suspended" });
+  if (updatedPublication.status !== REPORTED_STATUS) {
+    await publicationRepository.updateById(publicationId, { status: REPORTED_STATUS });
   }
 };
 
