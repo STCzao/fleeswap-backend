@@ -9,7 +9,7 @@ const Publication = require("../../src/models/Publication");
 
 const usuarioBase = {
   nombre: "Test",
-  apellido: "Publicacion",
+  apellido: "Publicación",
   fechaNacimiento: "2000-01-01",
   email: "pub@test.com",
   password: "Password123!",
@@ -663,7 +663,7 @@ describe("E: DELETE /api/publications/:id — Eliminar publicación", () => {
     const res = await request(app)
       .delete(`/api/publications/${publicacionId}`)
       .set("Authorization", `Bearer ${token}`)
-      // No se envía { confirmacion: true }
+      // No se envía { confirmación: true }
       .send({});
 
     expect(res.status).to.equal(400);

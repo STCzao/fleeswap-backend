@@ -148,7 +148,7 @@ describe("Auth API", function () {
       expect(res.body).to.have.property("message", "Credenciales inválidas");
     });
 
-    it("contrasena incorrecta -> 401 + mismo mensaje generico", async () => {
+    it("contraseña incorrecta -> 401 + mismo mensaje generico", async () => {
       const res = await request(app)
         .post("/api/auth/login")
         .send({ email: "login@test.com", password: "Incorrecta123!" });
@@ -159,7 +159,7 @@ describe("Auth API", function () {
   });
 
   describe("POST /api/auth/verify-email", () => {
-    it("verifica el email con token valido y limpia los campos auxiliares", async () => {
+    it("verifica el email con token válido y limpia los campos auxiliares", async () => {
       await request(app)
         .post("/api/auth/register")
         .send({
@@ -231,7 +231,7 @@ describe("Auth API", function () {
       expect(after.verificationTokenExpiry.getTime()).to.be.at.least(before.verificationTokenExpiry.getTime());
     });
 
-    it("rechaza el reenvio si el usuario ya esta verificado", async () => {
+    it("rechaza el reenvio si el usuario ya está verificado", async () => {
       const registerRes = await request(app)
         .post("/api/auth/register")
         .send({
@@ -268,7 +268,7 @@ describe("Auth API", function () {
       expect(res.body).to.have.property("message", "Token no proporcionado");
     });
 
-    it("token invalido -> 401", async () => {
+    it("token inválido -> 401", async () => {
       const res = await request(app)
         .patch("/api/auth/change-password")
         .set("Authorization", "Bearer tokenbasurainvalido")

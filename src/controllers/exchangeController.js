@@ -30,6 +30,16 @@ const obtenerEnviadas = async (req, res, next) => {
   }
 };
 
+// GET /api/exchanges/history
+const obtenerHistorial = async (req, res, next) => {
+  try {
+    const result = await exchangeService.obtenerHistorial(req.user._id, req.query);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/exchanges/:id
 const obtenerPorId = async (req, res, next) => {
   try {
@@ -84,6 +94,7 @@ module.exports = {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
+  obtenerHistorial,
   obtenerPorId,
   aceptarSolicitud,
   rechazarSolicitud,

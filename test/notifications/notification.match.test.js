@@ -53,7 +53,7 @@ describe("Notification matching service", function () {
     await mongoose.disconnect();
   });
 
-  it("crea una notificacion cuando una publicacion coincide con una busqueda activa", async () => {
+  it("crea una notificación cuando una publicación coincide con una búsqueda activa", async () => {
     const interestedUser = await crearUsuario();
     const owner = await crearUsuario();
 
@@ -86,7 +86,7 @@ describe("Notification matching service", function () {
     expect(saved[0].type).to.equal("active_search_match");
   });
 
-  it("no crea notificacion si solo coincide la categoria pero no las palabras clave", async () => {
+  it("no crea notificación si solo coincide la categoría pero no las palabras clave", async () => {
     const interestedUser = await crearUsuario();
     const owner = await crearUsuario();
 
@@ -106,7 +106,7 @@ describe("Notification matching service", function () {
     expect(await Notification.countDocuments({})).to.equal(0);
   });
 
-  it("tambien matchea cuando la palabra clave aparece solo en history", async () => {
+  it("también matchea cuando la palabra clave aparece solo en history", async () => {
     const interestedUser = await crearUsuario();
     const owner = await crearUsuario();
 
@@ -130,7 +130,7 @@ describe("Notification matching service", function () {
     expect(await Notification.countDocuments({})).to.equal(1);
   });
 
-  it("no crea notificacion para el owner de su propia publicacion", async () => {
+  it("no crea notificación para el owner de su propia publicación", async () => {
     const owner = await crearUsuario();
 
     await ActiveSearch.create({
@@ -149,7 +149,7 @@ describe("Notification matching service", function () {
     expect(await Notification.countDocuments({})).to.equal(0);
   });
 
-  it("ignora duplicados si el matching corre mas de una vez para la misma publicacion", async () => {
+  it("ignora duplicados si el matching corre más de una vez para la misma publicación", async () => {
     const interestedUser = await crearUsuario();
     const owner = await crearUsuario();
 

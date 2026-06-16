@@ -19,17 +19,20 @@ const errorHandler = (err, req, res, next) => {
   if (err.name === "MongoServerError" && err.code === 11000) {
     logger.warn(`[${req.method}] ${req.path} - 409: duplicate key`, meta);
     if (err.keyPattern?.email) {
-      return res.status(409).json({ message: "El email ya esta registrado" });
+      return res.status(409).json({ message: "El email ya está registrado" });
     }
     if (err.keyPattern?.user && err.keyPattern?.criteriaSignature) {
-      return res.status(409).json({ message: "Ya existe un criterio de busqueda igual" });
+      return res.status(409).json({ message: "Ya existe un criterio de búsqueda igual" });
+    }
+    if (err.keyPattern?.exchange && err.keyPattern?.reviewer) {
+      return res.status(409).json({ message: "Ya calificaste este intercambio" });
     }
     return res.status(409).json({ message: "Recurso duplicado" });
   }
 
   if (err.name === "CastError" && err.kind === "ObjectId") {
     logger.warn(`[${req.method}] ${req.path} - 400: invalid ObjectId`, meta);
-    return res.status(400).json({ message: "ID invalido" });
+    return res.status(400).json({ message: "ID inválido" });
   }
 
   logger.error(`[${req.method}] ${req.path} - 500: ${err.message}`, {

@@ -52,7 +52,7 @@ describe("Active Searches API", function () {
       await User.deleteOne({ _id: user._id });
     });
 
-    it("crea un criterio de busqueda activa para el usuario autenticado", async () => {
+    it("crea un criterio de búsqueda activa para el usuario autenticado", async () => {
       const res = await request(app)
         .post("/api/active-searches")
         .set("Authorization", `Bearer ${token}`)
@@ -101,7 +101,7 @@ describe("Active Searches API", function () {
 
       expect(res.status).to.equal(409);
       expect(res.body).to.deep.equal({
-        message: "Ya existe un criterio de busqueda igual",
+        message: "Ya existe un criterio de búsqueda igual",
       });
     });
 
@@ -122,7 +122,7 @@ describe("Active Searches API", function () {
       });
     });
 
-    it("rechaza acceso sin autenticacion", async () => {
+    it("rechaza acceso sin autenticación", async () => {
       const res = await request(app)
         .post("/api/active-searches")
         .send({
@@ -191,7 +191,7 @@ describe("Active Searches API", function () {
       expect(ids).to.include(secondSearch._id.toString());
     });
 
-    it("rechaza listado sin autenticacion", async () => {
+    it("rechaza listado sin autenticación", async () => {
       const res = await request(app)
         .get("/api/active-searches");
 
@@ -309,7 +309,7 @@ describe("Active Searches API", function () {
 
       expect(res.status).to.equal(409);
       expect(res.body).to.deep.equal({
-        message: "Ya existe un criterio de busqueda igual",
+        message: "Ya existe un criterio de búsqueda igual",
       });
     });
 
@@ -325,7 +325,7 @@ describe("Active Searches API", function () {
 
       expect(res.status).to.equal(404);
       expect(res.body).to.deep.equal({
-        message: "Criterio de busqueda no encontrado",
+        message: "Criterio de búsqueda no encontrado",
       });
     });
 
@@ -337,11 +337,11 @@ describe("Active Searches API", function () {
 
       expect(res.status).to.equal(400);
       expect(res.body).to.deep.equal({
-        message: "Solicitud invalida",
+        message: "Solicitud inválida",
       });
     });
 
-    it("rechaza editar con isActive invalido", async () => {
+    it("rechaza editar con isActive inválido", async () => {
       const res = await request(app)
         .patch(`/api/active-searches/${activeSearch._id}`)
         .set("Authorization", `Bearer ${token}`)
@@ -356,7 +356,7 @@ describe("Active Searches API", function () {
       });
     });
 
-    it("rechaza editar sin autenticacion", async () => {
+    it("rechaza editar sin autenticación", async () => {
       const res = await request(app)
         .patch(`/api/active-searches/${activeSearch._id}`)
         .send({
@@ -405,7 +405,7 @@ describe("Active Searches API", function () {
 
       expect(res.status).to.equal(200);
       expect(res.body).to.deep.equal({
-        message: "Criterio de busqueda eliminado correctamente",
+        message: "Criterio de búsqueda eliminado correctamente",
       });
 
       const deleted = await ActiveSearch.findById(activeSearch._id);
@@ -432,11 +432,11 @@ describe("Active Searches API", function () {
 
       expect(res.status).to.equal(404);
       expect(res.body).to.deep.equal({
-        message: "Criterio de busqueda no encontrado",
+        message: "Criterio de búsqueda no encontrado",
       });
     });
 
-    it("rechaza eliminar sin autenticacion", async () => {
+    it("rechaza eliminar sin autenticación", async () => {
       const res = await request(app)
         .delete(`/api/active-searches/${activeSearch._id}`);
 

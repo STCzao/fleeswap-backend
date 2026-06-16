@@ -226,7 +226,16 @@ const resolverReporte = async (id, action) => {
     return reporteActualizado;
   }
 
-  return adminRepository.actualizarEstadoReporte(id, "dismissed");
+  const reporteActualizado = await adminRepository.actualizarEstadoReporte(id, "dismissed");
+  const pendientes = await adminRepository.contarReportesPendientesDePublicacion(
+    reporte.publicationId,
+  );
+
+  if (pendientes === 0) {
+    await adminRepository.reactivarPublicacion(reporte.publicationId);
+  }
+
+  return reporteActualizado;
 };
 
 module.exports = {

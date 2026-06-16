@@ -41,6 +41,9 @@ const listarReportes = (filtro, skip, limit) =>
 
 const contarReportes = (filtro) => Report.countDocuments(filtro);
 
+const contarReportesPendientesDePublicacion = (publicationId) =>
+  Report.countDocuments({ publicationId, status: "pending" });
+
 const findReporteById = (id) => Report.findById(id);
 
 const actualizarEstadoReporte = (id, status, session) =>
@@ -56,6 +59,13 @@ const suspenderPublicacion = (publicationId, session) =>
   Publication.findByIdAndUpdate(
     publicationId,
     { status: "suspended" },
+    { returnDocument: "after", ...(session && { session }) },
+  );
+
+const reactivarPublicacion = (publicationId, session) =>
+  Publication.findByIdAndUpdate(
+    publicationId,
+    { status: "available" },
     { returnDocument: "after", ...(session && { session }) },
   );
 
@@ -110,9 +120,11 @@ module.exports = {
   actualizarUsuarioById,
   listarReportes,
   contarReportes,
+  contarReportesPendientesDePublicacion,
   findReporteById,
   actualizarEstadoReporte,
   suspenderPublicacion,
+  reactivarPublicacion,
   findPublicacionConOwner,
   suspenderPublicacionesDisponiblesDeUsuario,
   listarPublicaciones,

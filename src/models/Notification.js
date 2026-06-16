@@ -21,7 +21,7 @@ const notificationSchema = new mongoose.Schema(
       required: true,
       enum: {
         values: NOTIFICATION_TYPES,
-        message: "Tipo de notificacion invalido",
+        message: "Tipo de notificación inválido",
       },
     },
     title: {
@@ -101,7 +101,7 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Evita duplicados si por error la misma notificacion se procesa mas de una vez
+// Evita duplicados si por error la misma notificación se procesa más de una vez
 // para el mismo usuario y el mismo evento de dominio.
 notificationSchema.index(
   { user: 1, dedupeKey: 1 },

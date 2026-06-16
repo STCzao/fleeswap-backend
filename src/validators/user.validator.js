@@ -26,7 +26,7 @@ const actualizarPerfilValidator = [
     .custom((value) => {
       const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
       const regex = new RegExp(`^https://res\\.cloudinary\\.com/${cloudName}/.+`);
-      if (!regex.test(value)) throw new Error("La URL de la foto no es valida");
+      if (!regex.test(value)) throw new Error("La URL de la foto no es válida");
       return true;
     })
     .isLength({ max: 300 }).withMessage("La URL de la foto no puede superar los 300 caracteres"),
@@ -34,27 +34,27 @@ const actualizarPerfilValidator = [
   body("bio")
     .optional()
     .trim()
-    .isLength({ min: 3, max: 300 }).withMessage("La descripcion debe tener entre 3 y 300 caracteres"),
+    .isLength({ min: 3, max: 300 }).withMessage("La descripción debe tener entre 3 y 300 caracteres"),
 
   body("location")
     .optional()
-    .isIn(LOCALIDADES_TUCUMAN).withMessage("La localidad seleccionada no es valida"),
+    .isIn(LOCALIDADES_TUCUMAN).withMessage("La localidad seleccionada no es válida"),
 
   body("preferredCategories")
     .optional()
     .isArray({ max: PREFERRED_CATEGORIES.length })
-    .withMessage("Las categorias preferidas deben enviarse como array"),
+    .withMessage("Las categorías preferidas deben enviarse como array"),
 
   body("preferredCategories.*")
     .optional()
     .isIn(PREFERRED_CATEGORIES)
-    .withMessage("La categoria preferida no es valida"),
+    .withMessage("La categoría preferida no es válida"),
 ];
 
-// Validacion para eliminar cuenta: requiere la contrasena como confirmacion de identidad.
+// Validación para eliminar cuenta: requiere la contraseña como confirmación de identidad.
 const eliminarCuentaValidator = [
   body("password")
-    .exists({ checkFalsy: true }).withMessage("La contrasena es requerida para confirmar la eliminacion"),
+    .exists({ checkFalsy: true }).withMessage("La contraseña es requerida para confirmar la eliminación"),
 ];
 
 module.exports = { actualizarPerfilValidator, eliminarCuentaValidator };

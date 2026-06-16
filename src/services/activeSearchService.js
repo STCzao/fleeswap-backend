@@ -30,7 +30,7 @@ const crear = async (userId, { category, keywords = [], type = "ambos" }) => {
     criteriaSignature,
   );
   if (existingSearch) {
-    throw new AppError("Ya existe un criterio de busqueda igual", 409);
+    throw new AppError("Ya existe un criterio de búsqueda igual", 409);
   }
 
   return activeSearchRepository.create({
@@ -47,7 +47,7 @@ const listarPorUsuario = (userId) => activeSearchRepository.findByUser(userId);
 
 const editar = async (searchId, userId, fields) => {
   const activeSearch = await activeSearchRepository.findById(searchId);
-  if (!activeSearch) throw new AppError("Criterio de busqueda no encontrado", 404);
+  if (!activeSearch) throw new AppError("Criterio de búsqueda no encontrado", 404);
   if (activeSearch.user.toString() !== userId.toString()) {
     throw new AppError("No autorizado", 403);
   }
@@ -58,7 +58,7 @@ const editar = async (searchId, userId, fields) => {
     "type",
     "isActive",
   ].some((field) => fields[field] !== undefined);
-  if (!hasUpdatableField) throw new AppError("Solicitud invalida", 400);
+  if (!hasUpdatableField) throw new AppError("Solicitud inválida", 400);
 
   const nextCategory = fields.category ?? activeSearch.category;
   const nextKeywords = fields.keywords !== undefined
@@ -80,7 +80,7 @@ const editar = async (searchId, userId, fields) => {
     searchId,
   );
   if (existingSearch) {
-    throw new AppError("Ya existe un criterio de busqueda igual", 409);
+    throw new AppError("Ya existe un criterio de búsqueda igual", 409);
   }
 
   return activeSearchRepository.updateById(searchId, {
@@ -94,7 +94,7 @@ const editar = async (searchId, userId, fields) => {
 
 const eliminar = async (searchId, userId) => {
   const activeSearch = await activeSearchRepository.findById(searchId);
-  if (!activeSearch) throw new AppError("Criterio de busqueda no encontrado", 404);
+  if (!activeSearch) throw new AppError("Criterio de búsqueda no encontrado", 404);
   if (activeSearch.user.toString() !== userId.toString()) {
     throw new AppError("No autorizado", 403);
   }

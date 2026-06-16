@@ -4,6 +4,7 @@ const messageRepository = require("../repositories/messageRepository");
 const logger = require("../helpers/logger");
 
 const MAX_MESSAGE_LENGTH = 1000;
+const BLOQUEO_PUBLICACION = "suspended";
 
 const getParticipantIds = (exchange) => {
   const reqId = exchange.requester?._id || exchange.requester;
@@ -16,6 +17,10 @@ const getParticipantIds = (exchange) => {
 
 const esParticipante = (exchange, userId) =>
   getParticipantIds(exchange).includes(userId.toString());
+
+const tienePublicacionBloqueada = (exchange) =>
+  exchange.requestedPublication?.status === BLOQUEO_PUBLICACION ||
+  exchange.offeredPublication?.status === BLOQUEO_PUBLICACION;
 
 const mapMessagePayload = (message, sender) => ({
   _id: message._id,
@@ -59,9 +64,13 @@ const registerChatHandlers = (io, socket) => {
       }
 
       // Solo intercambios "active" pueden unirse al chat en tiempo real.
-      // Completed/cancelled se leen via REST (GET /:id/messages), no via socket.
+      // Completed/cancelled se leen vía REST (GET /:id/messages), no vía socket.
       if (exchange.status !== "active") {
         return withAck(ack, { ok: false, error: "El chat no está disponible" });
+      }
+
+      if (tienePublicacionBloqueada(exchange)) {
+        return withAck(ack, { ok: false, error: "La publicación está bloqueada por revisión" });
       }
 
       socket.join(`chat:${exchangeId}`);
@@ -106,6 +115,10 @@ const registerChatHandlers = (io, socket) => {
 
       if (exchange.status !== "active") {
         return withAck(ack, { ok: false, error: "El chat no está disponible" });
+      }
+
+      if (tienePublicacionBloqueada(exchange)) {
+        return withAck(ack, { ok: false, error: "La publicación está bloqueada por revisión" });
       }
 
       const message = await messageRepository.create({

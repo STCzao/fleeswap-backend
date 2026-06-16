@@ -12,7 +12,7 @@ const listar = async (req, res, next) => {
 };
 
 // PATCH /api/notifications/:id/read
-// Marca una notificacion puntual como leida si pertenece al usuario autenticado.
+// Marca una notificación puntual como leida si pertenece al usuario autenticado.
 const marcarLeida = async (req, res, next) => {
   try {
     const notification = await notificationCenterService.marcarLeida(
@@ -26,12 +26,12 @@ const marcarLeida = async (req, res, next) => {
 };
 
 // PATCH /api/notifications/read-all
-// Marca todas las notificaciones no leidas del usuario autenticado como leidas.
+// Marca todas las notificaciones no leídas del usuario autenticado como leídas.
 const marcarTodasLeidas = async (req, res, next) => {
   try {
     const result = await notificationCenterService.marcarTodasLeidas(req.user._id);
     res.status(200).json({
-      message: "Notificaciones marcadas como leidas",
+      message: "Notificaciones marcadas como leídas",
       ...result,
     });
   } catch (err) {

@@ -29,8 +29,8 @@ const crearUsuarioConToken = async (overrides = {}) => {
 const crearPublicacion = async (ownerId, overrides = {}) =>
   Publication.create({
     title: "Objeto recomendado",
-    description: "Descripcion valida para recomendaciones.",
-    history: "Historia valida para recomendaciones.",
+    description: "Descripción válida para recomendaciones.",
+    history: "Historia válida para recomendaciones.",
     category: "electronica",
     condition: "bueno",
     type: "trueque",

@@ -18,9 +18,9 @@ const SEARCH_TYPES = ["trueque", "venta", "ambos"];
 
 const categoryRule = body("category")
   .notEmpty()
-  .withMessage("La categoria es requerida")
+  .withMessage("La categoría es requerida")
   .isIn(SEARCH_CATEGORIES)
-  .withMessage("La categoria de busqueda no es valida");
+  .withMessage("La categoría de búsqueda no es válida");
 
 const keywordsRule = body("keywords")
   .optional()
@@ -40,7 +40,7 @@ const keywordItemRule = body("keywords.*")
 const typeRule = body("type")
   .optional()
   .isIn(SEARCH_TYPES)
-  .withMessage("El tipo de busqueda no es valido");
+  .withMessage("El tipo de búsqueda no es válido");
 
 const crearValidator = [
   categoryRule,
@@ -53,9 +53,9 @@ const editarValidator = [
   body("category")
     .optional()
     .notEmpty()
-    .withMessage("La categoria es requerida")
+    .withMessage("La categoría es requerida")
     .isIn(SEARCH_CATEGORIES)
-    .withMessage("La categoria de busqueda no es valida"),
+    .withMessage("La categoría de búsqueda no es válida"),
   keywordsRule,
   keywordItemRule,
   typeRule,

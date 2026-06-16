@@ -8,6 +8,11 @@ const AppError = require("../helpers/AppError");
 // "completed" y "cancelled" se permiten para preservar el historial de mensajes.
 const BLOQUEADOS = ["pending", "rejected"];
 const PERMITIDOS = ["active", "completed", "cancelled"];
+const BLOQUEO_PUBLICACION = "suspended";
+
+const tienePublicacionBloqueada = (exchange) =>
+  exchange.requestedPublication?.status === BLOQUEO_PUBLICACION ||
+  exchange.offeredPublication?.status === BLOQUEO_PUBLICACION;
 
 const obtenerMensajes = async (userId, exchangeId, { before, limit }) => {
   const { limit: resolvedLimit } = buildPagination({ limit }, 20);
@@ -56,6 +61,7 @@ const obtenerMensajes = async (userId, exchangeId, { before, limit }) => {
     messages,
     hasMore,
     exchangeStatus: exchange.status,
+    chatBlocked: tienePublicacionBloqueada(exchange),
   };
 };
 

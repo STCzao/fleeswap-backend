@@ -1,7 +1,7 @@
 const resend = require("../config/resend");
 const logger = require("./logger");
 
-// Helper genérico para enviar emails via Resend.
+// Helper genérico para enviar emails vía Resend.
 // Centraliza el envío y loguea errores sin detener el flujo — un fallo de email
 // no debería impedir la operación principal (ej: el reset token ya se guardó en DB).
 // En desarrollo usa "onboarding@resend.dev" como remitente (sandbox de Resend).

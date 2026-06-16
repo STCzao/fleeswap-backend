@@ -7,7 +7,7 @@ const sanitizarTexto = require("../helpers/sanitizarTexto");
 const enviarEmail = require("../helpers/enviarEmail");
 const AppError = require("../helpers/AppError");
 
-// Hash dummy generado una vez al iniciar el modulo.
+// Hash dummy generado una vez al iniciar el módulo.
 // Se usa en login para que bcrypt.compare siempre ejecute su trabajo completo,
 // igualando el tiempo de respuesta cuando el usuario no existe (mitiga timing attacks).
 const DUMMY_HASH = bcrypt.hashSync(
@@ -15,7 +15,7 @@ const DUMMY_HASH = bcrypt.hashSync(
   10,
 );
 
-// Periodo de gracia para cuentas soft-deleted: 30 dias en milisegundos.
+// Periodo de gracia para cuentas soft-deleted: 30 días en milisegundos.
 // Usado en login (reactivacion) y register (bloqueo de email).
 const GRACIA_SOFT_DELETE_MS = 30 * 24 * 60 * 60 * 1000;
 const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
@@ -59,14 +59,14 @@ const enviarEmailDeVerificacion = async ({ email, nombre, token }) => {
 // Desestructura solo los campos necesarios; confirmPassword no llega al service.
 // Mitiga timing attacks hasheando siempre, independientemente de si el email existe.
 // Sanitiza nombre y apellido contra XSS antes de persistir.
-// Genera un verificationToken (expira en 24hs) para la futura verificacion via Resend.
-// Verifica tambien usuarios inactivos (soft-deleted) para respetar la gracia de 30 dias.
+// Genera un verificationToken (expira en 24hs) para la futura verificación vía Resend.
+// Verifica también usuarios inactivos (soft-deleted) para respetar la gracia de 30 días.
 const register = async ({ nombre, apellido, fechaNacimiento, email, password }) => {
   // Buscar incluyendo inactivos para respetar el periodo de gracia.
   const existing = await userRepository.findByEmailIncluyendoInactivos(email);
 
   if (existing) {
-    // Si la cuenta esta inactiva pero dentro de la gracia, el email no esta disponible.
+    // Si la cuenta está inactiva pero dentro de la gracia, el email no está disponible.
     // Si la gracia expiro, el email se libera y se permite re-registrar.
     if (!existing.isActive) {
       if (!graciaExpirada(existing.deletedAt)) {
@@ -130,7 +130,7 @@ const register = async ({ nombre, apellido, fechaNacimiento, email, password }) 
 // Autentica un usuario existente y emite tokens de acceso y refresco.
 // Mitiga timing attacks comparando con bcrypt incluso cuando el usuario no existe.
 // El refresh token se hashea con bcrypt antes de persistir; nunca se almacena en crudo.
-// Si el usuario esta soft-deleted y dentro del periodo de gracia (30 dias), lo reactiva.
+// Si el usuario está soft-deleted y dentro del periodo de gracia (30 días), lo reactiva.
 // Si el periodo de gracia expiro, la cuenta se considera eliminada definitivamente.
 const login = async ({ email, password }) => {
   // Busca incluyendo usuarios inactivos para poder reactivar.
@@ -142,7 +142,7 @@ const login = async ({ email, password }) => {
     throw new AppError("Credenciales inválidas", 401);
   }
 
-  // Cuenta eliminada: verificar si esta dentro del periodo de gracia.
+  // Cuenta eliminada: verificar si está dentro del periodo de gracia.
   if (!user.isActive) {
     if (graciaExpirada(user.deletedAt)) {
       await bcrypt.compare(password, DUMMY_HASH);
@@ -186,8 +186,8 @@ const login = async ({ email, password }) => {
 
 // Renueva el accessToken usando el refreshToken de la cookie httpOnly.
 // Verifica firma JWT del refresh token y luego compara contra el hash en DB;
-// doble validacion: evita que tokens revocados (logout) sigan siendo validos.
-// Emite un nuevo par de tokens (rotation) e invalida el refresh token anterior.
+// doble validación: evita que tokens revocados (logout) sigan siendo validos.
+// Emite un nuevo par de tokens (rotation) e inválida el refresh token anterior.
 const refresh = async (refreshToken) => {
   if (!refreshToken) throw new AppError("Refresh token no proporcionado", 401);
 
@@ -223,24 +223,24 @@ const refresh = async (refreshToken) => {
   return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 };
 
-// Invalida la sesion del usuario eliminando el refresh token de DB y limpiando la cookie.
+// Inválida la sesión del usuario eliminando el refresh token de DB y limpiando la cookie.
 // Usa el refresh token de la cookie para identificar al usuario; funciona aunque el
-// accessToken haya expirado, evitando que el usuario quede "atrapado" sin poder cerrar sesion.
+// accessToken haya expirado, evitando que el usuario quede "atrapado" sin poder cerrar sesión.
 const logout = async (refreshToken) => {
-  if (!refreshToken) return; // si no hay cookie, la sesion ya estaba cerrada
+  if (!refreshToken) return; // si no hay cookie, la sesión ya estaba cerrada
 
   let decoded;
   try {
     decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
   } catch {
-    return; // token invalido o expirado; la sesion ya no es valida, nada que limpiar
+    return; // token inválido o expirado; la sesión ya no es válida, nada que limpiar
   }
 
   await userRepository.revocarRefreshToken(decoded.id);
 };
 
-// Cambia la contrasena del usuario autenticado.
-// Verifica que la contrasena actual sea correcta antes de actualizar.
+// Cambia la contraseña del usuario autenticado.
+// Verifica que la contraseña actual sea correcta antes de actualizar.
 // Revoca el refresh token para forzar re-login en todos los dispositivos.
 const cambiarPassword = async (userId, passwordActual, passwordNueva) => {
   const user = await userRepository.findByIdConPassword(userId);
@@ -254,7 +254,7 @@ const cambiarPassword = async (userId, passwordActual, passwordNueva) => {
   await userRepository.revocarRefreshToken(userId);
 };
 
-// Genera un reset token y envia el email de recuperacion.
+// Genera un reset token y envia el email de recuperación.
 // Responde siempre igual para no revelar si el email existe (enumeracion de usuarios).
 // El token se guarda como hash SHA-256 en DB; el plano solo viaja en el email.
 const solicitarResetPassword = async (email) => {
@@ -285,9 +285,9 @@ const solicitarResetPassword = async (email) => {
   });
 };
 
-// Resetea la contrasena usando el token enviado por email.
+// Resetea la contraseña usando el token enviado por email.
 // Hashea el token recibido con SHA-256 y lo compara contra el hash guardado en DB.
-// Si es valido y no expiro, actualiza la contrasena y revoca sesiones activas.
+// Si es válido y no expiro, actualiza la contraseña y revoca sesiones activas.
 const resetPassword = async (token, password) => {
   const resetTokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const user = await userRepository.findByResetToken(resetTokenHash);
@@ -304,7 +304,7 @@ const verifyEmail = async (token) => {
   const verificationTokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const user = await userRepository.findByVerificationToken(verificationTokenHash);
 
-  if (!user) throw new AppError("Token invalido o expirado", 400);
+  if (!user) throw new AppError("Token inválido o expirado", 400);
   if (user.isVerified) throw new AppError("El email ya fue verificado", 400);
 
   await userRepository.limpiarVerificationToken(user._id);
