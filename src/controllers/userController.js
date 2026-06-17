@@ -51,6 +51,16 @@ const obtenerPerfilPublico = async (req, res, next) => {
   }
 };
 
+// GET /api/users/:userId/reputation - reputación pública del usuario
+const obtenerReputacion = async (req, res, next) => {
+  try {
+    const result = await userService.obtenerReputacion(req.params.userId);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // DELETE /api/users/me
 // Soft-delete; marca la cuenta como inactiva y revoca la sesión.
 // Limpia la cookie httpOnly para que el browser no envie un refresh token ya inválido.
@@ -69,6 +79,7 @@ const eliminarCuenta = async (req, res, next) => {
 module.exports = {
   obtenerPerfil,
   obtenerPerfilPublico,
+  obtenerReputacion,
   actualizarPerfil,
   eliminarCuenta,
   obtenerMisPublicaciones,

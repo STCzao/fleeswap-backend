@@ -1,4 +1,5 @@
 const exchangeRepository = require("../repositories/exchangeRepository");
+const reviewRepository = require("../repositories/reviewRepository");
 const publicationRepository = require("../repositories/publicationRepository");
 const userRepository = require("../repositories/userRepository");
 const notificationService = require("./notificationService");
@@ -29,6 +30,21 @@ const validarPublicacionesNoBloqueadas = (exchange) => {
   if (tienePublicacionBloqueada(exchange)) {
     throw new AppError("La publicación está bloqueada por revisión", 409);
   }
+};
+
+const attachHasRated = async (exchanges, reviewerId) => {
+  if (exchanges.length === 0) return exchanges;
+
+  const reviews = await reviewRepository.findByExchangesAndReviewer(
+    exchanges.map((exchange) => exchange._id),
+    reviewerId,
+  );
+  const ratedExchangeIds = new Set(reviews.map((review) => review.exchange.toString()));
+
+  return exchanges.map((exchange) => ({
+    ...exchange.toObject(),
+    hasRated: ratedExchangeIds.has(exchange._id.toString()),
+  }));
 };
 
 // Crear solicitud de INTERCAMBIO o COMPRA
@@ -128,7 +144,7 @@ const obtenerRecibidas = async (ownerId, query) => {
   ]);
 
   return {
-    exchanges,
+    exchanges: await attachHasRated(exchanges, ownerId),
     pagination: {
       total,
       page,
@@ -148,7 +164,7 @@ const obtenerEnviadas = async (requesterId, query) => {
   ]);
 
   return {
-    exchanges,
+    exchanges: await attachHasRated(exchanges, requesterId),
     pagination: {
       total,
       page,
@@ -316,6 +332,7 @@ const confirmarIntercambio = async (userId, exchangeId) => {
     const updatedExchange = await exchangeRepository.updateById(exchangeId, {
       confirmedByOwner: true,
       status: "completed",
+      completedAt: new Date(),
     });
 
     const io = getIO();
@@ -345,6 +362,7 @@ const confirmarIntercambio = async (userId, exchangeId) => {
 
   if (ambasConfirmadas) {
     data.status = "completed";
+    data.completedAt = new Date();
     await Promise.all([
       publicationRepository.updateById(exchange.offeredPublication._id, {
         status: "exchanged",

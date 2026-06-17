@@ -9,6 +9,9 @@ const create = (data) => Review.create(data);
 const findByExchangeAndReviewer = (exchangeId, reviewerId) =>
   Review.findOne({ exchange: exchangeId, reviewer: reviewerId });
 
+const findByExchangesAndReviewer = (exchangeIds, reviewerId) =>
+  Review.find({ exchange: { $in: exchangeIds }, reviewer: reviewerId }).select("exchange");
+
 const findReceivedByUser = (userId, { skip = 0, limit = 10 } = {}) =>
   isValidObjectId(userId)
     ? Review.find({ reviewedUser: userId })
@@ -52,6 +55,7 @@ const getStatsByUser = async (userId) => {
 module.exports = {
   create,
   findByExchangeAndReviewer,
+  findByExchangesAndReviewer,
   findReceivedByUser,
   countReceivedByUser,
   getStatsByUser,
