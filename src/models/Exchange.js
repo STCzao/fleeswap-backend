@@ -43,6 +43,10 @@ const exchangeSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
     // "exchange" = trueque clásico, "purchase" = compra directa
     type: {
       type: String,

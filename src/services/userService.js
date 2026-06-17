@@ -109,6 +109,36 @@ const obtenerPerfilPublico = async (userId) => {
   };
 };
 
+const buildReviewerName = (reviewer) =>
+  [reviewer?.nombre, reviewer?.apellido].filter(Boolean).join(" ").trim();
+
+const obtenerReputacion = async (userId) => {
+  const [
+    reputation,
+    totalCompletados,
+    totalCancelados,
+    reseñasRecibidas,
+  ] = await Promise.all([
+    reviewRepository.getStatsByUser(userId),
+    exchangeRepository.countCompletedByUser(userId),
+    exchangeRepository.countCancelledByUser(userId),
+    reviewRepository.findReceivedByUser(userId, { limit: 0 }),
+  ]);
+
+  return {
+    ratingPromedio: reputation.averageRating,
+    totalCompletados,
+    totalCancelados,
+    reseñas: reseñasRecibidas.map((review) => ({
+      _id: review._id,
+      rating: review.rating,
+      comment: review.comment || "",
+      createdAt: review.createdAt,
+      reviewerName: buildReviewerName(review.reviewer),
+    })),
+  };
+};
+
 // Elimina la cuenta del usuario (soft-delete).
 // Requiere la contraseña como verificación de identidad: previene eliminaciones accidentales
 // o por un atacante que tenga un access token robado pero no la contraseña.
@@ -156,6 +186,7 @@ const obtenerRecomendaciones = async (userId, limit = 10) => {
 module.exports = {
   obtenerPerfil,
   obtenerPerfilPublico,
+  obtenerReputacion,
   actualizarPerfil,
   eliminarCuenta,
   obtenerMisPublicaciones,

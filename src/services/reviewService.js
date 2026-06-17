@@ -21,11 +21,11 @@ const resolveReviewedUser = (exchange, reviewerId) => {
 };
 
 const ensureReviewWindowOpen = (exchange) => {
-  const completedAt = exchange.updatedAt || exchange.createdAt;
+  const completedAt = exchange.completedAt || exchange.updatedAt || exchange.createdAt;
   const deadline = new Date(completedAt).getTime() + REVIEW_WINDOW_MS;
 
   if (Date.now() > deadline) {
-    throw new AppError("El plazo para calificar este intercambio ya venció", 400);
+    throw new AppError("El plazo de 7 días para calificar ha expirado", 400);
   }
 };
 

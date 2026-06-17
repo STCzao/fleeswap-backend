@@ -193,7 +193,7 @@ describe("Reviews API", () => {
       .send({ exchangeId: exchangeData.exchange._id.toString(), rating: 5 });
 
     expect(res.status).to.equal(400);
-    expect(res.body).to.deep.equal({ message: "El plazo para calificar este intercambio ya venció" });
+    expect(res.body).to.deep.equal({ message: "El plazo de 7 días para calificar ha expirado" });
   });
 
   it("lista las calificaciones recibidas del usuario autenticado", async () => {
@@ -257,5 +257,72 @@ describe("Reviews API", () => {
     expect(res.body.calificacionesRecibidas).to.have.length(1);
     expect(res.body.publicaciones).to.have.length(1);
     expect(res.body.publicaciones[0]).to.include({ title: "Pedida profile", status: "available" });
+  });
+
+  it("expone reputación pública con la estructura exacta esperada por el frontend", async () => {
+    const owner = await registrarUsuario("owner.reputation@review.test.com", {
+      nombre: "Martina",
+      apellido: "Leal",
+    });
+    const requesterA = await registrarUsuario("requester.a.reputation@review.test.com", {
+      nombre: "Juan",
+      apellido: "Pérez",
+    });
+    const requesterB = await registrarUsuario("requester.b.reputation@review.test.com", {
+      nombre: "Ana",
+      apellido: "Núñez",
+    });
+
+    const exchangeA = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requesterA.userId,
+      suffix: "reputation-a",
+    });
+    const exchangeB = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requesterB.userId,
+      suffix: "reputation-b",
+    });
+    const cancelled = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requesterB.userId,
+      suffix: "reputation-cancelled",
+    });
+    await Exchange.findByIdAndUpdate(cancelled.exchange._id, { status: "cancelled" });
+    trackScenario({ owner, requester: requesterA, exchangeData: exchangeA });
+    trackScenario({ requester: requesterB, exchangeData: exchangeB });
+    trackScenario({ exchangeData: cancelled });
+
+    const reviewA = await Review.create({
+      exchange: exchangeA.exchange._id,
+      reviewer: requesterA.userId,
+      reviewedUser: owner.userId,
+      rating: 5,
+      comment: "Excelente persona",
+    });
+    const reviewB = await Review.create({
+      exchange: exchangeB.exchange._id,
+      reviewer: requesterB.userId,
+      reviewedUser: owner.userId,
+      rating: 4,
+      comment: "",
+    });
+    trackScenario({ review: reviewA });
+    trackScenario({ review: reviewB });
+
+    const res = await request(app).get(`/api/users/${owner.userId}/reputation`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body).to.include({
+      ratingPromedio: 4.5,
+      totalCompletados: 2,
+      totalCancelados: 1,
+    });
+    expect(res.body.reseñas).to.have.length(2);
+    expect(res.body.reseñas[0]).to.have.keys(["_id", "rating", "comment", "createdAt", "reviewerName"]);
+    expect(res.body.reseñas.map((review) => review.reviewerName)).to.have.members([
+      "Juan Pérez",
+      "Ana Núñez",
+    ]);
   });
 });
