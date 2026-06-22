@@ -2,12 +2,12 @@ require("dotenv").config();
 const chai = require("chai");
 const { expect } = chai;
 const request = require("supertest");
-const app = require("../src/app");
+const app = require("../../src/app");
 const mongoose = require("mongoose");
-const connectDB = require("../src/config/db");
-const User = require("../src/models/User");
-const Publication = require("../src/models/Publication");
-const Report = require("../src/models/Report");
+const connectDB = require("../../src/config/db");
+const User = require("../../src/models/User");
+const Publication = require("../../src/models/Publication");
+const Report = require("../../src/models/Report");
 
 describe("POST /api/publications/:id/report", () => {
   let token;

@@ -2,12 +2,15 @@ const { body, query, param } = require("express-validator");
 const { paginationRules } = require("./pagination.validator");
 
 const ESTADOS = ["pending", "active", "completed", "cancelled", "rejected"];
+const ESTADOS_HISTORIAL = ["pending", "active", "completed", "cancelled"];
 
 const enviarSolicitudValidator = [
   body("type")
     .optional()
     .isIn(["exchange", "purchase"])
     .withMessage("Tipo de solicitud inválido"),
+  // offeredPublicationId es obligatorio para intercambios y opcional para compras directas.
+  // Se usan dos reglas separadas porque express-validator no soporta if/else en una sola cadena.
   body("offeredPublicationId")
     .if(body("type").not().equals("purchase"))
     .notEmpty()
@@ -36,6 +39,14 @@ const listarValidator = [
     .withMessage("Estado inválido"),
 ];
 
+const historialValidator = [
+  ...paginationRules,
+  query("status")
+    .optional()
+    .isIn(ESTADOS_HISTORIAL)
+    .withMessage("Estado inválido para historial"),
+];
+
 const accionSolicitudValidator = [
   param("id")
     .isMongoId()
@@ -43,7 +54,7 @@ const accionSolicitudValidator = [
 ];
 
 const cancelarValidator = [
-  body("confirmacion")
+  body("confirmación")
     .custom((val) => val === true)
     .withMessage("Se requiere confirmación para cancelar"),
 ];
@@ -51,6 +62,7 @@ const cancelarValidator = [
 module.exports = {
   enviarSolicitudValidator,
   listarValidator,
+  historialValidator,
   accionSolicitudValidator,
   cancelarValidator,
 };

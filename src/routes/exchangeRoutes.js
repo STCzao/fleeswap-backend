@@ -4,12 +4,14 @@ const validarCampos = require("../middlewares/validarCampos");
 const {
   enviarSolicitudValidator,
   listarValidator,
+  historialValidator,
   accionSolicitudValidator,
 } = require("../validators/exchange.validator");
 const {
   enviarSolicitud,
   obtenerRecibidas,
   obtenerEnviadas,
+  obtenerHistorial,
   obtenerPorId,
   aceptarSolicitud,
   rechazarSolicitud,
@@ -23,6 +25,7 @@ const router = Router();
 
 router.get("/received", authenticate, listarValidator, validarCampos, obtenerRecibidas);
 router.get("/sent", authenticate, listarValidator, validarCampos, obtenerEnviadas);
+router.get("/history", authenticate, historialValidator, validarCampos, obtenerHistorial);
 router.get("/:id", authenticate, accionSolicitudValidator, validarCampos, obtenerPorId);
 router.get("/:id/messages", authenticate, obtenerMensajesValidator, validarCampos, obtenerMensajes);
 router.patch("/:id/accept", authenticate, accionSolicitudValidator, validarCampos, aceptarSolicitud);
@@ -35,6 +38,7 @@ router.patch(
   validarCampos,
   cancelarIntercambio,
 );
+// POST "/" va al final para que Express no lo confunda con una ruta /:id al parsear.
 router.post("/", authenticate, enviarSolicitudValidator, validarCampos, enviarSolicitud);
 
 module.exports = router;

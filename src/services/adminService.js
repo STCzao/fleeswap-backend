@@ -10,6 +10,7 @@ const USERS_PER_PAGE = 20;
 // o comportamientos inesperados cuando la búsqueda viene desde query params.
 const escaparRegex = (texto = "") => texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// ── Dashboard de métricas (H7.1) ──────────────────────────────────────────────
 const obtenerStats = async () => {
   const [
     usuariosActivos,
@@ -31,6 +32,7 @@ const obtenerStats = async () => {
   };
 };
 
+// ── Gestión de usuarios (H7.2 / H7.3) ────────────────────────────────────────
 const listarUsuarios = async ({ role, isActive, search, page }) => {
   const pagina = Math.max(1, parseInt(page, 10) || 1);
   const skip = (pagina - 1) * USERS_PER_PAGE;
@@ -75,6 +77,8 @@ const cambiarEstadoUsuario = async (targetUserId, currentUserId, isActive) => {
     throw new AppError("El admin no puede operar sobre si mismo", 400);
   }
 
+  // Transacción para garantizar que el usuario y sus publicaciones se actualicen atómicamente.
+  // Si la suspensión de publicaciones falla, el usuario tampoco queda suspendido.
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
@@ -111,6 +115,7 @@ const cambiarRolUsuario = async (targetUserId, currentUserId, role) => {
   return usuario;
 };
 
+// ── Gestión de reportes (H7.5) ────────────────────────────────────────────────
 const listarReportes = async ({ status, reason, page, limit }) => {
   const { page: pagina, limit: limite, skip } = buildPagination({ page, limit });
   const filtro = {};
@@ -131,6 +136,7 @@ const listarReportes = async ({ status, reason, page, limit }) => {
   };
 };
 
+// ── Gestión de publicaciones (H7.4) ──────────────────────────────────────────
 const listarPublicaciones = async ({ status, category, page, limit }) => {
   const { page: pagina, limit: limite, skip } = buildPagination({ page, limit });
   const filtro = {};
@@ -159,6 +165,7 @@ const cambiarEstadoPublicacion = async (id, status) => {
 };
 
 const eliminarPublicacion = async (id) => {
+  // Transacción para eliminar publicación y sus reportes asociados de forma atómica.
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
@@ -181,6 +188,9 @@ const resolverReporte = async (id, action) => {
   if (reporte.status !== "pending") throw new AppError("El reporte ya fue resuelto", 400);
 
   if (action === "suspend_publication") {
+    // Transacción para garantizar que la publicación se suspende y el reporte se marca
+    // como reviewed en la misma operación. El email al dueño se envía fuera de la transacción
+    // porque es una operación externa que no debe bloquear el commit.
     const session = await mongoose.startSession();
     let reporteActualizado;
     try {
@@ -216,7 +226,16 @@ const resolverReporte = async (id, action) => {
     return reporteActualizado;
   }
 
-  return adminRepository.actualizarEstadoReporte(id, "dismissed");
+  const reporteActualizado = await adminRepository.actualizarEstadoReporte(id, "dismissed");
+  const pendientes = await adminRepository.contarReportesPendientesDePublicacion(
+    reporte.publicationId,
+  );
+
+  if (pendientes === 0) {
+    await adminRepository.reactivarPublicacion(reporte.publicationId);
+  }
+
+  return reporteActualizado;
 };
 
 module.exports = {

@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "mocha test/**/*.test.js --timeout 10000 --require dotenv/config"
+    "backfill:active-searches": "node scripts/backfillActiveSearchCriteriaSignature.js",
+    "backfill:notifications": "node scripts/backfillNotificationDedupeKey.js",
+    "test": "mocha --require dotenv/config --require test/setup.js test/**/*.test.js --timeout 10000"
   },
   "repository": {
     "type": "git",
@@ -35,6 +37,9 @@
     "resend": "^6.11.0",
     "socket.io": "^4.8.3",
     "winston": "^3.19.0"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.5"
   },
   "devDependencies": {
     "chai": "^6.2.2",

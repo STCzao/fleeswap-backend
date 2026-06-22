@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-// photos se valida con dos validators separados porque Mongoose ejecuta cada uno
+// photos se válida con dos validators separados porque Mongoose ejecuta cada uno
 // independientemente; un único validator con && no genera mensajes distintos por caso.
 const publicationSchema = new mongoose.Schema(
   {

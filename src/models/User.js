@@ -1,13 +1,26 @@
 const mongoose = require("mongoose");
 const LOCALIDADES_TUCUMAN = require("../helpers/localidadesTucuman");
 
+const PREFERRED_CATEGORIES = [
+  "electronica",
+  "ropa_accesorios",
+  "coleccionables",
+  "libros_comics",
+  "deportes",
+  "hogar_deco",
+  "juguetes",
+  "arte",
+  "musica",
+  "otros",
+];
+
 // Modelo de usuario de la plataforma.
 // password y resetToken tienen select:false para nunca exponerse en queries por defecto.
 // photo almacena la URL publica de Cloudinary.
 // profileComplete es un virtual que deriva su valor de los campos reales del perfil.
-// NOTA: la fortaleza de la contrasena no se valida aqui porque el modelo recibe
-// el hash bcrypt (60+ chars), no la contrasena original. La validacion de fortaleza
-// vive en la ruta via express-validator.
+// NOTA: la fortaleza de la contraseña no se válida aqui porque el modelo recibe
+// el hash bcrypt (60+ chars), no la contraseña original. La validación de fortaleza
+// vive en la ruta vía express-validator.
 const userSchema = new mongoose.Schema(
   {
     nombre: {
@@ -33,24 +46,24 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       minlength: [5, "El email debe tener al menos 5 caracteres"],
       maxlength: [100, "El email no puede superar los 100 caracteres"],
-      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "El email no tiene un formato valido"],
+      match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "El email no tiene un formato válido"],
     },
     password: {
       type: String,
-      required: [true, "La contrasena es requerida"],
+      required: [true, "La contraseña es requerida"],
       select: false,
     },
     role: {
       type: String,
       required: true,
       default: "USER_ROLE",
-      enum: { values: ["USER_ROLE", "ADMIN_ROLE"], message: "Rol no valido" },
+      enum: { values: ["USER_ROLE", "ADMIN_ROLE"], message: "Rol no válido" },
     },
     photo: {
       type: String,
       default: null,
       maxlength: [300, "La URL de la foto no puede superar los 300 caracteres"],
-      match: [/^https:\/\/.+/, "La URL de la foto no es valida"],
+      match: [/^https:\/\/.+/, "La URL de la foto no es válida"],
     },
     bio: {
       type: String,
@@ -64,7 +77,15 @@ const userSchema = new mongoose.Schema(
       default: null,
       enum: {
         values: [null, ...LOCALIDADES_TUCUMAN],
-        message: "La localidad seleccionada no es valida",
+        message: "La localidad seleccionada no es válida",
+      },
+    },
+    preferredCategories: {
+      type: [String],
+      default: [],
+      enum: {
+        values: PREFERRED_CATEGORIES,
+        message: "La categoría preferida no es válida",
       },
     },
     isVerified: {
@@ -99,7 +120,7 @@ const userSchema = new mongoose.Schema(
       default: null,
       validate: {
         validator: (value) => value === null || value > new Date(),
-        message: "La fecha de expiracion del token debe ser futura",
+        message: "La fecha de expiración del token debe ser futura",
       },
     },
     isActive: {
@@ -115,7 +136,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-// Query middleware: filtra usuarios eliminados automaticamente en todas las queries.
+// Query middleware: filtra usuarios eliminados automáticamente en todas las queries.
 // Las funciones que necesitan incluir usuarios inactivos (login, register) deben
 // agregar explicitamente { isActive: { $exists: true } } o usar el Model directamente.
 const filtrarInactivos = function () {
@@ -129,7 +150,7 @@ userSchema.pre("findOne", filtrarInactivos);
 userSchema.pre("findOneAndUpdate", filtrarInactivos);
 userSchema.pre("countDocuments", filtrarInactivos);
 
-// Virtual que indica si el perfil esta completo.
+// Virtual que indica si el perfil está completo.
 // Se considera completo cuando el usuario tiene bio, location y photo cargados.
 userSchema.virtual("profileComplete").get(function () {
   return !!(this.bio && this.location && this.photo);

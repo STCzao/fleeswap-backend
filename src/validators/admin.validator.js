@@ -20,7 +20,7 @@ const PUBLICATION_CATEGORIES = Publication.schema.path("category").enumValues;
 const usuarioIdParamValidator = [
   param("id")
     .isMongoId()
-    .withMessage("ID de usuario invalido"),
+    .withMessage("ID de usuario inválido"),
 ];
 
 const obtenerUsuarioAdminValidator = [...usuarioIdParamValidator];
@@ -36,7 +36,7 @@ const cambiarRolUsuarioValidator = [
   ...usuarioIdParamValidator,
   body("role")
     .isIn(USER_ROLES)
-    .withMessage("Rol invalido"),
+    .withMessage("Rol inválido"),
 ];
 
 const listarUsuariosAdminValidator = [
@@ -65,24 +65,24 @@ const listarPublicacionesAdminValidator = [
   query("status")
     .optional()
     .isIn(PUBLICATION_STATUS)
-    .withMessage("Estado de publicacion invalido"),
+    .withMessage("Estado de publicación inválido"),
   query("category")
     .optional()
     .isIn(PUBLICATION_CATEGORIES)
-    .withMessage("Categoria invalida"),
+    .withMessage("Categoría inválida"),
 ];
 
 const publicacionIdParamValidator = [
   param("id")
     .isMongoId()
-    .withMessage("ID de publicacion invalido"),
+    .withMessage("ID de publicación inválido"),
 ];
 
 const cambiarEstadoPublicacionValidator = [
   ...publicacionIdParamValidator,
   body("status")
     .isIn(PUBLICATION_STATUS)
-    .withMessage("Estado de publicacion invalido"),
+    .withMessage("Estado de publicación inválido"),
 ];
 
 const eliminarPublicacionAdminValidator = [...publicacionIdParamValidator];
@@ -92,22 +92,22 @@ const listarReportesValidator = [
   query("status")
     .optional()
     .isIn(REPORT_STATUS)
-    .withMessage("Estado de reporte invalido"),
+    .withMessage("Estado de reporte inválido"),
   query("reason")
     .optional()
     .isIn(REPORT_REASONS)
-    .withMessage("Motivo de reporte invalido"),
+    .withMessage("Motivo de reporte inválido"),
 ];
 
 const resolverReporteValidator = [
   param("id")
     .isMongoId()
-    .withMessage("ID de reporte invalido"),
+    .withMessage("ID de reporte inválido"),
   body("action")
     .exists({ checkFalsy: true })
     .withMessage("La accion es requerida")
     .isIn(REPORT_ACTIONS)
-    .withMessage("Accion invalida"),
+    .withMessage("Accion inválida"),
 ];
 
 module.exports = {

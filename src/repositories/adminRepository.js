@@ -14,6 +14,8 @@ const listarUsuarios = (filtro, skip, limit) =>
 
 const contarUsuarios = (filtro) => User.countDocuments(filtro);
 
+// `isActive: { $exists: true }` asegura que solo se operen usuarios del modelo actual.
+// Documentos legacy sin el campo quedan fuera del scope del panel de admin.
 const findUsuarioById = (id) =>
   User.findOne({ _id: id, isActive: { $exists: true } })
     .select("nombre apellido email role isActive createdAt bio location photo isVerified")
@@ -23,7 +25,7 @@ const actualizarUsuarioById = (id, data, session) =>
   User.findOneAndUpdate(
     { _id: id, isActive: { $exists: true } },
     data,
-    { new: true, runValidators: true, ...(session && { session }) },
+    { returnDocument: "after", runValidators: true, ...(session && { session }) },
   )
     .select("nombre apellido email role isActive createdAt bio location photo isVerified")
     .lean();
@@ -39,13 +41,16 @@ const listarReportes = (filtro, skip, limit) =>
 
 const contarReportes = (filtro) => Report.countDocuments(filtro);
 
+const contarReportesPendientesDePublicacion = (publicationId) =>
+  Report.countDocuments({ publicationId, status: "pending" });
+
 const findReporteById = (id) => Report.findById(id);
 
 const actualizarEstadoReporte = (id, status, session) =>
   Report.findByIdAndUpdate(
     id,
     { status },
-    { new: true, ...(session && { session }) },
+    { returnDocument: "after", ...(session && { session }) },
   )
     .populate("publicationId", "title status reportCount owner photos")
     .populate("reporterId", "nombre apellido email photo");
@@ -54,7 +59,14 @@ const suspenderPublicacion = (publicationId, session) =>
   Publication.findByIdAndUpdate(
     publicationId,
     { status: "suspended" },
-    { new: true, ...(session && { session }) },
+    { returnDocument: "after", ...(session && { session }) },
+  );
+
+const reactivarPublicacion = (publicationId, session) =>
+  Publication.findByIdAndUpdate(
+    publicationId,
+    { status: "available" },
+    { returnDocument: "after", ...(session && { session }) },
   );
 
 const findPublicacionConOwner = (id) =>
@@ -62,6 +74,8 @@ const findPublicacionConOwner = (id) =>
     .populate("owner", "nombre email")
     .lean();
 
+// Solo suspende las publicaciones "available": las que ya están "unavailable" o "suspended"
+// no se tocan para no perder su estado original si el usuario fuese reactivado más adelante.
 const suspenderPublicacionesDisponiblesDeUsuario = (ownerId, session) =>
   Publication.updateMany(
     { owner: ownerId, status: "available" },
@@ -80,7 +94,7 @@ const listarPublicaciones = (filtro, skip, limit) =>
 const contarPublicaciones = (filtro) => Publication.countDocuments(filtro);
 
 const actualizarPublicacionById = (id, data) =>
-  Publication.findByIdAndUpdate(id, data, { new: true, runValidators: true })
+  Publication.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true })
     .populate("owner", "nombre apellido email");
 
 const eliminarPublicacionById = (id, session) =>
@@ -106,9 +120,11 @@ module.exports = {
   actualizarUsuarioById,
   listarReportes,
   contarReportes,
+  contarReportesPendientesDePublicacion,
   findReporteById,
   actualizarEstadoReporte,
   suspenderPublicacion,
+  reactivarPublicacion,
   findPublicacionConOwner,
   suspenderPublicacionesDisponiblesDeUsuario,
   listarPublicaciones,

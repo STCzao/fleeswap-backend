@@ -1,10 +1,11 @@
 const request = require("supertest");
 const { expect } = require("chai");
 const mongoose = require("mongoose");
-const app = require("../src/app");
-const User = require("../src/models/User");
-const Publication = require("../src/models/Publication");
-const Exchange = require("../src/models/Exchange");
+const app = require("../../src/app");
+const User = require("../../src/models/User");
+const Publication = require("../../src/models/Publication");
+const Exchange = require("../../src/models/Exchange");
+const Review = require("../../src/models/Review");
 
 // ─── Helpers de setup ────────────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ before(async () => {
 });
 
 afterEach(async () => {
+  await Review.deleteMany({});
   await Exchange.deleteMany({});
   await Publication.deleteMany({});
   await User.deleteMany({ email: /exchange\.test\.com$/ });
@@ -600,6 +602,66 @@ describe("GET /api/exchanges/received — Listado de solicitudes recibidas", () 
     expect(exchange).to.have.property("complementaryAmount");
     expect(exchange).to.have.property("offeredPublication");
     expect(exchange).to.have.property("requester");
+  });
+
+  it("1d | marca hasRated según reseña existente del usuario autenticado", async () => {
+    const requester = await registrarUsuario({
+      nombre: "Ñato",
+      apellido: "Solicitante",
+      fechaNacimiento: "2000-01-01",
+      email: "nato@exchange.test.com",
+      password: "Password123!",
+      confirmPassword: "Password123!",
+    });
+
+    const owner = await registrarUsuario({
+      nombre: "Dueña",
+      apellido: "Calificadora",
+      fechaNacimiento: "2000-01-01",
+      email: "duena@exchange.test.com",
+      password: "Password123!",
+      confirmPassword: "Password123!",
+    });
+
+    const pubRequester = await Publication.create({
+      ...crearPublicacion({ title: "Publicación del solicitante" }),
+      owner: requester.userId,
+    });
+
+    const pubOwner = await Publication.create({
+      ...crearPublicacion({ title: "Publicación de la dueña" }),
+      owner: owner.userId,
+    });
+
+    const envio = await request(app)
+      .post("/api/exchanges")
+      .set("Authorization", `Bearer ${requester.token}`)
+      .send({
+        offeredPublicationId: pubRequester._id.toString(),
+        requestedPublicationId: pubOwner._id.toString(),
+      });
+
+    await Exchange.findByIdAndUpdate(envio.body._id, {
+      status: "completed",
+      confirmedByRequester: true,
+      confirmedByOwner: true,
+      completedAt: new Date(),
+    });
+    await Review.create({
+      exchange: envio.body._id,
+      reviewer: owner.userId,
+      reviewedUser: requester.userId,
+      rating: 5,
+      comment: "Muy buen intercambio",
+    });
+
+    const res = await request(app)
+      .get("/api/exchanges/received")
+      .set("Authorization", `Bearer ${owner.token}`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.exchanges).to.have.length(1);
+    expect(res.body.exchanges[0]).to.have.property("hasRated", true);
   });
 
 });

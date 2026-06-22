@@ -3,16 +3,18 @@ const http = require("http");
 const app = require("./app");
 const connectDB = require("./config/db");
 const { initSocket } = require("./sockets");
+const logger = require("./helpers/logger");
 
 const PORT = process.env.PORT || 3000;
 
 const start = async () => {
   await connectDB();
+  // Socket.IO requiere un servidor HTTP nativo; no puede adjuntarse directamente a la app Express.
   const httpServer = http.createServer(app);
   initSocket(httpServer);
 
   httpServer.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
+    logger.info(`Servidor corriendo en puerto ${PORT}`);
   });
 };
 

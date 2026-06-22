@@ -3,11 +3,12 @@ const { crearValidator, editarValidator, cambiarEstadoValidator, reportarValidat
 const validarCampos = require("../middlewares/validarCampos");
 const authenticate = require("../middlewares/authenticate");
 const optionalAuthenticate = require("../middlewares/optionalAuthenticate");
-const { crear, editar, eliminar, cambiarEstado, verDetalle, listar, reportar } = require("../controllers/publicationController");
+const { crear, editar, eliminar, cambiarEstado, verDetalle, listar, recomendar, reportar } = require("../controllers/publicationController");
 
 const router = Router();
 
 router.get("/", listarValidator, validarCampos, listar);
+router.get("/recommendations", authenticate, recomendar);
 // optionalAuthenticate permite identificar al owner para mostrarle sus publicaciones unavailable
 router.get("/:id", optionalAuthenticate, verDetalle);
 

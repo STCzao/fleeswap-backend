@@ -71,7 +71,7 @@ const loginValidator = [
 ];
 
 // Reglas de validación para el cambio de contraseña.
-// passwordActual se valida solo por presencia — la verificación real la hace el service contra bcrypt.
+// passwordActual se válida solo por presencia — la verificación real la hace el service contra bcrypt.
 // passwordNueva tiene las mismas reglas de fortaleza que el registro.
 const changePasswordValidator = [
   body("passwordActual")
@@ -98,7 +98,7 @@ const changePasswordValidator = [
 ];
 
 // Validación para solicitar recuperación de contraseña.
-// Solo se valida formato de email — no se revela si existe o no en DB.
+// Solo se válida formato de email — no se revela si existe o no en DB.
 const forgotPasswordValidator = [
   body("email")
     .exists({ checkFalsy: true }).withMessage("El email es requerido")
@@ -108,7 +108,7 @@ const forgotPasswordValidator = [
 ];
 
 // Validación para resetear la contraseña con token.
-// El token viene del link enviado por email — se valida como hex string de 64 chars (32 bytes).
+// El token viene del link enviado por email — se válida como hex string de 64 chars (32 bytes).
 const resetPasswordValidator = [
   body("token")
     .exists({ checkFalsy: true }).withMessage("El token es requerido")
@@ -130,4 +130,18 @@ const resetPasswordValidator = [
     }),
 ];
 
-module.exports = { registerValidator, loginValidator, changePasswordValidator, forgotPasswordValidator, resetPasswordValidator };
+const verifyEmailValidator = [
+  body("token")
+    .exists({ checkFalsy: true }).withMessage("El token es requerido")
+    .isHexadecimal().withMessage("Token inválido")
+    .isLength({ min: 64, max: 64 }).withMessage("Token inválido"),
+];
+
+module.exports = {
+  registerValidator,
+  loginValidator,
+  changePasswordValidator,
+  forgotPasswordValidator,
+  resetPasswordValidator,
+  verifyEmailValidator,
+};

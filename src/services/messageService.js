@@ -3,17 +3,20 @@ const messageRepository = require("../repositories/messageRepository");
 const { buildPagination } = require("../helpers/buildPagination");
 const AppError = require("../helpers/AppError");
 
+// El chat está disponible solo para intercambios que ya tuvieron contacto real entre las partes.
+// "pending" y "rejected" se bloquean porque el intercambio nunca llegó a concretarse.
+// "completed" y "cancelled" se permiten para preservar el historial de mensajes.
 const BLOQUEADOS = ["pending", "rejected"];
 const PERMITIDOS = ["active", "completed", "cancelled"];
+const BLOQUEO_PUBLICACION = "suspended";
+
+const tienePublicacionBloqueada = (exchange) =>
+  exchange.requestedPublication?.status === BLOQUEO_PUBLICACION ||
+  exchange.offeredPublication?.status === BLOQUEO_PUBLICACION;
 
 const obtenerMensajes = async (userId, exchangeId, { before, limit }) => {
   const { limit: resolvedLimit } = buildPagination({ limit }, 20);
   const exchange = await exchangeRepository.findById(exchangeId);
-
-  // DEBUG TEMPORAL - eliminar una vez identificada la causa
-  console.warn("[DEBUG messages] exchangeId:", exchangeId, typeof exchangeId);
-  console.warn("[DEBUG messages] userId:", userId?.toString(), typeof userId);
-  console.warn("[DEBUG messages] exchange found:", !!exchange);
 
   if (!exchange) throw new AppError("Solicitud no encontrada", 404);
 
@@ -58,6 +61,7 @@ const obtenerMensajes = async (userId, exchangeId, { before, limit }) => {
     messages,
     hasMore,
     exchangeStatus: exchange.status,
+    chatBlocked: tienePublicacionBloqueada(exchange),
   };
 };
 

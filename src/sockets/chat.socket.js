@@ -4,6 +4,7 @@ const messageRepository = require("../repositories/messageRepository");
 const logger = require("../helpers/logger");
 
 const MAX_MESSAGE_LENGTH = 1000;
+const BLOQUEO_PUBLICACION = "suspended";
 
 const getParticipantIds = (exchange) => {
   const reqId = exchange.requester?._id || exchange.requester;
@@ -17,6 +18,10 @@ const getParticipantIds = (exchange) => {
 const esParticipante = (exchange, userId) =>
   getParticipantIds(exchange).includes(userId.toString());
 
+const tienePublicacionBloqueada = (exchange) =>
+  exchange.requestedPublication?.status === BLOQUEO_PUBLICACION ||
+  exchange.offeredPublication?.status === BLOQUEO_PUBLICACION;
+
 const mapMessagePayload = (message, sender) => ({
   _id: message._id,
   content: message.content,
@@ -29,6 +34,8 @@ const mapMessagePayload = (message, sender) => ({
   createdAt: message.createdAt,
 });
 
+// Wrapper para acknowledgements opcionales de Socket.IO: el cliente puede omitir el callback
+// y el servidor no falla. Permite usar el mismo handler con y sin confirmación del cliente.
 const withAck = (ack, payload) => {
   if (typeof ack === "function") {
     ack(payload);
@@ -56,8 +63,14 @@ const registerChatHandlers = (io, socket) => {
         return withAck(ack, { ok: false, error: "No autorizado" });
       }
 
+      // Solo intercambios "active" pueden unirse al chat en tiempo real.
+      // Completed/cancelled se leen vía REST (GET /:id/messages), no vía socket.
       if (exchange.status !== "active") {
         return withAck(ack, { ok: false, error: "El chat no está disponible" });
+      }
+
+      if (tienePublicacionBloqueada(exchange)) {
+        return withAck(ack, { ok: false, error: "La publicación está bloqueada por revisión" });
       }
 
       socket.join(`chat:${exchangeId}`);
@@ -102,6 +115,10 @@ const registerChatHandlers = (io, socket) => {
 
       if (exchange.status !== "active") {
         return withAck(ack, { ok: false, error: "El chat no está disponible" });
+      }
+
+      if (tienePublicacionBloqueada(exchange)) {
+        return withAck(ack, { ok: false, error: "La publicación está bloqueada por revisión" });
       }
 
       const message = await messageRepository.create({

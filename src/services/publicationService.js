@@ -1,11 +1,16 @@
 const publicationRepository = require("../repositories/publicationRepository");
 const reportRepository = require("../repositories/reportRepository");
+const notificationService = require("./notificationService");
 const buildPublicationQuery = require("../helpers/buildPublicationQuery");
 const { buildPagination } = require("../helpers/buildPagination");
 const sanitizarTexto = require("../helpers/sanitizarTexto");
+const logger = require("../helpers/logger");
 const AppError = require("../helpers/AppError");
 
-const REPORT_THRESHOLD = 5;
+// A partir de este número de reportes la publicación se suspende automáticamente,
+// sin intervencion del admin. El admin puede reactivarla manualmente si lo considera necesario.
+const REPORTED_STATUS = "suspended";
+// Estado usado para bloquear una publicación apenas recibe un reporte pendiente.
 
 const crear = async (
   ownerId,
@@ -21,6 +26,19 @@ const crear = async (
     photos,
     owner: ownerId,
   });
+
+  // H5.3: las notificaciones son un side effect del alta de la publicación.
+  // Si fallan, se loguea el problema pero no se revierte ni se rompe el 201.
+  try {
+    await notificationService.processPublicationMatches(publication);
+  } catch (error) {
+    logger.error("active_search_match processing failed", {
+      publicationId: publication._id,
+      ownerId,
+      error: error.message,
+      stack: error.stack,
+    });
+  }
 
   return publication;
 };
@@ -77,7 +95,7 @@ const verDetalle = async (publicationId, requesterId = null) => {
   return publication;
 };
 
-// page y limit se clampean en el service; no se confía en que el cliente envíe valores razonables.
+// page y limit se clampean en el service; no se confia en que el cliente envie valores razonables.
 const listar = async (filtros) => {
   const { page, limit, skip } = buildPagination(filtros);
 
@@ -89,7 +107,7 @@ const listar = async (filtros) => {
     userId: filtros.userId,
   });
 
-  // Promise.all orquesta ambas queries en paralelo; el repository expone operaciones atómicas.
+  // Promise.all orquesta ambas queries en paralelo; el repository expone operaciones atomicas.
   const [publications, total] = await Promise.all([
     publicationRepository.findAll(query, { skip, limit }),
     publicationRepository.countAll(query),
@@ -124,11 +142,8 @@ const reportar = async (publicationId, reporterId, reason, details) => {
   await reportRepository.create({ publicationId, reporterId, reason, details });
 
   const updatedPublication = await publicationRepository.incrementReportCount(publicationId);
-  if (
-    updatedPublication.reportCount >= REPORT_THRESHOLD &&
-    updatedPublication.status !== "suspended"
-  ) {
-    await publicationRepository.updateById(publicationId, { status: "suspended" });
+  if (updatedPublication.status !== REPORTED_STATUS) {
+    await publicationRepository.updateById(publicationId, { status: REPORTED_STATUS });
   }
 };
 
