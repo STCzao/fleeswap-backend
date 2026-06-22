@@ -5,15 +5,15 @@ const create = (data) => Exchange.create(data);
 const findById = (id) =>
   Exchange.findById(id)
     .populate("offeredPublication", "title photos status")
-    .populate("requestedPublication", "title photos owner category type status")
+    .populate("requestedPublication", "title photos owner category type status price")
     .populate("requester", "nombre apellido photo")
     .populate("owner", "nombre apellido photo")
     .select("+type");
 
 const findByIdWithDetails = (id) =>
   Exchange.findById(id)
-    .populate("offeredPublication", "title photos category condition status")
-    .populate("requestedPublication", "title photos category condition status")
+    .populate("offeredPublication", "title photos category condition status price")
+    .populate("requestedPublication", "title photos category condition status price")
     .populate("requester", "nombre apellido photo")
     .populate("owner", "nombre apellido photo");
 
@@ -48,9 +48,9 @@ const rejectPendingByPublications = (publicationIds, excludeId) =>
 
 const findReceivedByOwner = (ownerId, statusFilter, { skip, limit }) =>
   Exchange.find({ owner: ownerId, ...statusFilter })
-    .populate("offeredPublication", "title photos category condition status")
+    .populate("offeredPublication", "title photos category condition status price")
     .populate("requester", "nombre apellido photo")
-    .populate("requestedPublication", "title photos category type status")
+    .populate("requestedPublication", "title photos category type status price")
     .select("+type")
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -62,7 +62,7 @@ const countReceived = (ownerId, statusFilter) =>
 const findSentByRequester = (requesterId, statusFilter, { skip, limit }) =>
   Exchange.find({ requester: requesterId, ...statusFilter })
     .populate("offeredPublication", "title photos status")
-    .populate("requestedPublication", "title photos owner category type status")
+    .populate("requestedPublication", "title photos owner category type status price")
     .populate("owner", "nombre apellido photo")
     .select("+type")
     .sort({ createdAt: -1 })
@@ -77,8 +77,8 @@ const findHistoryByUser = (userId, statusFilter, { skip, limit }) =>
     $or: [{ requester: userId }, { owner: userId }],
     ...statusFilter,
   })
-    .populate("offeredPublication", "title photos category condition type status")
-    .populate("requestedPublication", "title photos category condition type status")
+    .populate("offeredPublication", "title photos category condition type status price")
+    .populate("requestedPublication", "title photos category condition type status price")
     .populate("requester", "nombre apellido photo")
     .populate("owner", "nombre apellido photo")
     .select("+type")
