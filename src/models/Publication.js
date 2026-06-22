@@ -55,6 +55,16 @@ const publicationSchema = new mongoose.Schema(
         message: "Tipo de publicación inválido",
       },
     },
+    price: {
+      type: Number,
+      default: 0,
+      min: [0, "El precio no puede ser negativo"],
+    },
+    location: {
+      type: String,
+      required: [true, "La ubicación es requerida"],
+      trim: true,
+    },
     photos: {
       type: [String],
       validate: [

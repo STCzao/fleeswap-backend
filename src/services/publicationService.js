@@ -14,7 +14,7 @@ const REPORTED_STATUS = "suspended";
 
 const crear = async (
   ownerId,
-  { title, description, history, category, condition, type, photos },
+  { title, description, history, category, condition, type, price, location, photos },
 ) => {
   const publication = await publicationRepository.create({
     title: sanitizarTexto(title),
@@ -23,6 +23,8 @@ const crear = async (
     category,
     condition,
     type,
+    price,
+    location: sanitizarTexto(location),
     photos,
     owner: ownerId,
   });
@@ -55,6 +57,8 @@ const editar = async (publicationId, ownerId, fields) => {
   if (fields.category !== undefined) data.category = fields.category;
   if (fields.condition !== undefined) data.condition = fields.condition;
   if (fields.type !== undefined) data.type = fields.type;
+  if (fields.price !== undefined) data.price = fields.price;
+  if (fields.location !== undefined) data.location = sanitizarTexto(fields.location);
   if (fields.photos !== undefined) data.photos = fields.photos;
 
   if (Object.keys(data).length === 0) throw new AppError("Solicitud inválida", 400);
