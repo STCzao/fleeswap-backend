@@ -8,7 +8,9 @@
     "dev": "nodemon src/index.js",
     "backfill:active-searches": "node scripts/backfillActiveSearchCriteriaSignature.js",
     "backfill:notifications": "node scripts/backfillNotificationDedupeKey.js",
-    "test": "mocha --require dotenv/config --require test/setup.js test/**/*.test.js --timeout 10000"
+    "test": "mocha --require dotenv/config --require test/integration/setup.js test/**/*.test.js --timeout 10000",
+    "test:unit": "mocha --require dotenv/config test/unit/**/*.test.js --timeout 10000",
+    "test:integration": "mocha --require dotenv/config --require test/integration/setup.js test/integration/**/*.test.js --timeout 10000"
   },
   "repository": {
     "type": "git",
