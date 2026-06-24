@@ -14,7 +14,8 @@ const REPORTED_STATUS = "suspended";
 
 const crear = async (
   ownerId,
-  { title, description, history, category, condition, type, price, location, photos },
+  // location no se acepta acá a propósito: vive en User.location, no se duplica por publicación.
+  { title, description, history, category, condition, type, price, photos },
 ) => {
   const publication = await publicationRepository.create({
     title: sanitizarTexto(title),
@@ -24,7 +25,6 @@ const crear = async (
     condition,
     type,
     price,
-    location: sanitizarTexto(location),
     photos,
     owner: ownerId,
   });
@@ -58,7 +58,6 @@ const editar = async (publicationId, ownerId, fields) => {
   if (fields.condition !== undefined) data.condition = fields.condition;
   if (fields.type !== undefined) data.type = fields.type;
   if (fields.price !== undefined) data.price = fields.price;
-  if (fields.location !== undefined) data.location = sanitizarTexto(fields.location);
   if (fields.photos !== undefined) data.photos = fields.photos;
 
   if (Object.keys(data).length === 0) throw new AppError("Solicitud inválida", 400);

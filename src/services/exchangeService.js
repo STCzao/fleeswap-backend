@@ -22,13 +22,37 @@ const notifyBestEffort = async (action, meta, fn) => {
   }
 };
 
-const tienePublicacionBloqueada = (exchange) =>
-  exchange.requestedPublication?.status === BLOQUEO_PUBLICACION ||
-  exchange.offeredPublication?.status === BLOQUEO_PUBLICACION;
+// Determina por qué una publicación del exchange no es operable, o null si está todo OK.
+// Se distinguen dos motivos porque tienen mensajes (y semántica) distintos para el usuario:
+//   - "eliminada": populate devolvió null → la publicación fue borrada (por el dueño o un admin).
+//     requestedPublication siempre es obligatoria; offeredPublication es null por diseño en las
+//     compras ("purchase"), pero en los intercambios ("exchange") también es obligatoria, así
+//     que null ahí también significa borrada.
+//   - "suspendida": la publicación sigue existiendo pero está en revisión de moderación.
+// El mensaje "bloqueada por revisión" se mantiene alineado con el del socket de chat
+// (ver chat.socket.js), para que el usuario reciba el mismo texto por ambas vías.
+const motivoPublicacionNoOperable = (exchange) => {
+  const requested = exchange.requestedPublication;
+  const offered = exchange.offeredPublication;
+
+  if (!requested) return "eliminada";
+  if (exchange.type !== "purchase" && !offered) return "eliminada";
+
+  if (requested.status === BLOQUEO_PUBLICACION || offered?.status === BLOQUEO_PUBLICACION) {
+    return "suspendida";
+  }
+
+  return null;
+};
 
 const validarPublicacionesNoBloqueadas = (exchange) => {
-  if (tienePublicacionBloqueada(exchange)) {
+  const motivo = motivoPublicacionNoOperable(exchange);
+
+  if (motivo === "suspendida") {
     throw new AppError("La publicación está bloqueada por revisión", 409);
+  }
+  if (motivo === "eliminada") {
+    throw new AppError("La publicación ya no está disponible", 409);
   }
 };
 
@@ -317,6 +341,8 @@ const confirmarIntercambio = async (userId, exchangeId) => {
     throw new AppError("El intercambio/venta no está en curso", 400);
   }
 
+  validarPublicacionesNoBloqueadas(exchange);
+
   if (exchange.type === "purchase") {
     if (!esOwner) throw new AppError("Solo el vendedor puede confirmar la venta", 403);
     if (exchange.confirmedByOwner) throw new AppError("Ya confirmaste esta venta", 400);
@@ -421,15 +447,12 @@ const cancelarIntercambio = async (userId, exchangeId) => {
     throw new AppError("No se puede cancelar una solicitud en este estado", 400);
   }
 
-  if (exchange.type === "purchase") {
-    const [updatedExchange] = await Promise.all([
-      exchangeRepository.updateById(exchangeId, { status: "cancelled" }),
-      publicationRepository.updateById(exchange.requestedPublication._id, {
-        status: "available",
-        intercambioActivo: false,
-      }),
-    ]);
-
+  // A diferencia de aceptar/confirmar, cancelar NUNCA debe rechazarse por publicación
+  // borrada o suspendida — cancelar es precisamente la vía de salida cuando algo de la
+  // publicación ya no está bien. Por eso acá no se usa validarPublicacionesNoBloqueadas;
+  // en cambio, liberarPublicacionTrasCancelar tolera null (borrada) sin romper, y respeta
+  // el estado "suspended" (no lo pisa con "available") para no deshacer una moderación.
+  const emitirChatReadonly = () => {
     const io = getIO();
     if (io) {
       io.to(`chat:${exchangeId}`).emit("chat:readonly", {
@@ -439,33 +462,89 @@ const cancelarIntercambio = async (userId, exchangeId) => {
     } else {
       logger.warn("chat:readonly no emitido - socket no inicializado", { exchangeId });
     }
+  };
 
+  if (exchange.type === "purchase") {
+    const [updatedExchange] = await Promise.all([
+      exchangeRepository.updateById(exchangeId, { status: "cancelled" }),
+      liberarPublicacionTrasCancelar(exchange.requestedPublication),
+    ]);
+
+    emitirChatReadonly();
     return updatedExchange;
   }
 
   const [updatedExchange] = await Promise.all([
     exchangeRepository.updateById(exchangeId, { status: "cancelled" }),
-    publicationRepository.updateById(exchange.offeredPublication._id, {
-      status: "available",
-      intercambioActivo: false,
-    }),
-    publicationRepository.updateById(exchange.requestedPublication._id, {
-      status: "available",
-      intercambioActivo: false,
-    }),
+    liberarPublicacionTrasCancelar(exchange.offeredPublication),
+    liberarPublicacionTrasCancelar(exchange.requestedPublication),
   ]);
 
-  const io = getIO();
-  if (!io) {
-    logger.warn("chat:readonly no emitido - socket no inicializado", { exchangeId });
-  } else {
-    io.to(`chat:${exchangeId}`).emit("chat:readonly", {
-      exchangeId: exchangeId.toString(),
-      reason: "cancelled",
-    });
-  }
-
+  emitirChatReadonly();
   return updatedExchange;
+};
+
+// Libera una publicación que quedó "atada" a un exchange que se cancela.
+// - publication null (fue borrada): no hay nada que actualizar, se devuelve sin romper.
+// - publication suspended (moderación en curso): se apaga intercambioActivo pero el
+//   status NO se toca, para no reactivar por accidente algo que un admin suspendió.
+// - cualquier otro caso: vuelve a "available", como antes.
+const liberarPublicacionTrasCancelar = (publication) => {
+  if (!publication) return null;
+
+  const data = { intercambioActivo: false };
+  if (publication.status !== BLOQUEO_PUBLICACION) data.status = "available";
+
+  return publicationRepository.updateById(publication._id, data);
+};
+
+// Se invoca cuando una publicación deja de estar disponible por una acción ajena a las
+// partes del exchange (un admin la borra o la suspende por moderación). Cancela en cascada
+// cualquier solicitud pending/active que la involucre, para que nunca quede un Exchange
+// apuntando a una publicación inexistente o inválida (esa referencia rota es la causa de
+// los 500 en accept/confirm/cancel y de que un intercambio nunca llegue a "completed" para
+// poder calificarlo).
+//
+// Importante: esta función NUNCA toca el status de `publicationId` (la publicación que
+// disparó la cascada) — si fue borrada no existe nada que tocar, y si fue suspendida debe
+// seguir suspendida; revertirla es decisión exclusiva de la moderación (ver adminService),
+// no de este flujo. Solo se libera la OTRA publicación involucrada en cada exchange.
+const cancelarPorPublicacionNoDisponible = async (publicationId) => {
+  const exchanges = await exchangeRepository.findActiveOrPendingByPublication(publicationId);
+
+  await Promise.all(
+    exchanges.map(async (exchange) => {
+      const eraActive = exchange.status === "active";
+
+      await exchangeRepository.updateById(exchange._id, { status: "cancelled" });
+
+      if (!eraActive) return; // pending: nunca llegó a tocar publicaciones, nada que liberar
+
+      const otraPublicacionId = [exchange.offeredPublication, exchange.requestedPublication]
+        .filter(Boolean)
+        .find((pub) => pub.toString() !== publicationId.toString());
+
+      if (otraPublicacionId) {
+        // No viene populada (findActiveOrPendingByPublication no hace populate), así que
+        // hay que pedirla para saber su status — si la "otra" publicación también está
+        // suspended por su lado, liberarPublicacionTrasCancelar evita reactivarla.
+        const otraPublicacion = await publicationRepository.findById(otraPublicacionId);
+        await liberarPublicacionTrasCancelar(otraPublicacion);
+      }
+
+      const io = getIO();
+      if (io) {
+        io.to(`chat:${exchange._id}`).emit("chat:readonly", {
+          exchangeId: exchange._id.toString(),
+          reason: "cancelled",
+        });
+      } else {
+        logger.warn("chat:readonly no emitido - socket no inicializado", {
+          exchangeId: exchange._id,
+        });
+      }
+    }),
+  );
 };
 
 module.exports = {
@@ -478,4 +557,5 @@ module.exports = {
   rechazarSolicitud,
   confirmarIntercambio,
   cancelarIntercambio,
+  cancelarPorPublicacionNoDisponible,
 };

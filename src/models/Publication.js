@@ -60,11 +60,11 @@ const publicationSchema = new mongoose.Schema(
       default: 0,
       min: [0, "El precio no puede ser negativo"],
     },
-    location: {
-      type: String,
-      required: [true, "La ubicación es requerida"],
-      trim: true,
-    },
+    // La ubicación NO se duplica acá: vive en User.location (el dueño la define una vez
+    // en su perfil) y se expone en los listados vía populate("owner", "... location").
+    // Tenerla también en Publication generaba un required:true que rompía cualquier
+    // Publication.create() de los tests que no la mandara, y no aportaba nada que
+    // owner.location no ya resolviera.
     photos: {
       type: [String],
       validate: [
