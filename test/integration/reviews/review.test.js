@@ -132,6 +132,53 @@ describe("Reviews API", () => {
     expect(second.body).to.deep.equal({ message: "Ya calificaste este intercambio" });
   });
 
+  it("rechaza calificaciones con rating fuera del rango 1 a 5", async () => {
+    const owner = await registrarUsuario("owner.range@review.test.com");
+    const requester = await registrarUsuario("requester.range@review.test.com");
+    const exchangeData = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requester.userId,
+      suffix: "range",
+    });
+    trackScenario({ owner, requester, exchangeData });
+
+    const tooLow = await request(app)
+      .post("/api/reviews")
+      .set("Authorization", `Bearer ${requester.token}`)
+      .send({ exchangeId: exchangeData.exchange._id.toString(), rating: 0 });
+
+    const tooHigh = await request(app)
+      .post("/api/reviews")
+      .set("Authorization", `Bearer ${requester.token}`)
+      .send({ exchangeId: exchangeData.exchange._id.toString(), rating: 6 });
+
+    expect(tooLow.status).to.equal(400);
+    expect(tooLow.body.errors[0]).to.have.property("field").that.equals("rating");
+    expect(tooHigh.status).to.equal(400);
+    expect(tooHigh.body.errors[0]).to.have.property("field").that.equals("rating");
+  });
+
+  it("no permite calificar un intercambio del que no es parte", async () => {
+    const owner = await registrarUsuario("owner.outsider@review.test.com");
+    const requester = await registrarUsuario("requester.outsider@review.test.com");
+    const outsider = await registrarUsuario("outsider.outsider@review.test.com");
+    const exchangeData = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requester.userId,
+      suffix: "outsider",
+    });
+    trackScenario({ owner, requester, exchangeData });
+    createdUserIds.push(outsider.userId);
+
+    const res = await request(app)
+      .post("/api/reviews")
+      .set("Authorization", `Bearer ${outsider.token}`)
+      .send({ exchangeId: exchangeData.exchange._id.toString(), rating: 5 });
+
+    expect(res.status).to.equal(403);
+    expect(res.body).to.deep.equal({ message: "No podés calificar un intercambio ajeno" });
+  });
+
   it("rechaza calificaciones sobre intercambios no completados", async () => {
     const owner = await registrarUsuario("owner.pending@review.test.com");
     const requester = await registrarUsuario("requester.pending@review.test.com");
@@ -324,5 +371,116 @@ describe("Reviews API", () => {
       "Juan Pérez",
       "Ana Núñez",
     ]);
+  });
+
+  it("redondea el rating promedio a un decimal cuando el promedio real no es exacto", async () => {
+    const owner = await registrarUsuario("owner.rounding@review.test.com");
+    const requesterA = await registrarUsuario("requester.a.rounding@review.test.com");
+    const requesterB = await registrarUsuario("requester.b.rounding@review.test.com");
+
+    const exchangeA = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requesterA.userId,
+      suffix: "rounding-a",
+    });
+    const exchangeB = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requesterB.userId,
+      suffix: "rounding-b",
+    });
+    const exchangeC = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requesterB.userId,
+      suffix: "rounding-c",
+    });
+    trackScenario({ owner, requester: requesterA, exchangeData: exchangeA });
+    trackScenario({ requester: requesterB, exchangeData: exchangeB });
+    trackScenario({ exchangeData: exchangeC });
+
+    const reviewA = await Review.create({
+      exchange: exchangeA.exchange._id,
+      reviewer: requesterA.userId,
+      reviewedUser: owner.userId,
+      rating: 5,
+    });
+    const reviewB = await Review.create({
+      exchange: exchangeB.exchange._id,
+      reviewer: requesterB.userId,
+      reviewedUser: owner.userId,
+      rating: 4,
+    });
+    const reviewC = await Review.create({
+      exchange: exchangeC.exchange._id,
+      reviewer: requesterB.userId,
+      reviewedUser: owner.userId,
+      rating: 4,
+    });
+    trackScenario({ review: reviewA });
+    trackScenario({ review: reviewB });
+    trackScenario({ review: reviewC });
+
+    const res = await request(app).get(`/api/users/${owner.userId}/reputation`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.ratingPromedio).to.equal(4.3);
+  });
+
+  it("no cuenta intercambios en estados intermedios como completados ni cancelados", async () => {
+    const owner = await registrarUsuario("owner.mixed@review.test.com");
+    const requester = await registrarUsuario("requester.mixed@review.test.com");
+
+    const completed = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requester.userId,
+      suffix: "mixed-completed",
+    });
+    const cancelled = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requester.userId,
+      suffix: "mixed-cancelled",
+    });
+    await Exchange.findByIdAndUpdate(cancelled.exchange._id, { status: "cancelled" });
+    const active = await crearExchangeCompletado({
+      ownerId: owner.userId,
+      requesterId: requester.userId,
+      suffix: "mixed-active",
+    });
+    await Exchange.findByIdAndUpdate(active.exchange._id, { status: "active" });
+    trackScenario({ owner, requester, exchangeData: completed });
+    trackScenario({ exchangeData: cancelled });
+    trackScenario({ exchangeData: active });
+
+    const res = await request(app).get(`/api/users/${owner.userId}/reputation`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body).to.include({ totalCompletados: 1, totalCancelados: 1 });
+  });
+
+  it("devuelve reputación vacía cuando el usuario no tiene reseñas", async () => {
+    const owner = await registrarUsuario("owner.empty@review.test.com");
+    trackScenario({ owner });
+
+    const res = await request(app).get(`/api/users/${owner.userId}/reputation`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body).to.include({ ratingPromedio: 0, totalCompletados: 0, totalCancelados: 0 });
+    expect(res.body.reseñas).to.have.length(0);
+  });
+
+  it("expone perfil público vacío y consistente cuando el usuario no tiene actividad", async () => {
+    const owner = await registrarUsuario("owner.profileempty@review.test.com");
+    trackScenario({ owner });
+
+    const res = await request(app).get(`/api/users/${owner.userId}`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body).to.include({
+      calificacionPromedio: 0,
+      totalCalificaciones: 0,
+      totalIntercambiosCompletados: 0,
+      cancelaciones: 0,
+    });
+    expect(res.body.calificacionesRecibidas).to.have.length(0);
+    expect(res.body.publicaciones).to.have.length(0);
   });
 });

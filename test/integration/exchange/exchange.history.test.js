@@ -106,4 +106,59 @@ describe("GET /api/exchanges/history", () => {
     expect(res.body.exchanges).to.have.length(1);
     expect(res.body.exchanges[0].status).to.equal("cancelled");
   });
+
+  ["pending", "active", "completed"].forEach((status) => {
+    it(`permite filtrar el historial por estado ${status}`, async () => {
+      const res = await request(app)
+        .get(`/api/exchanges/history?status=${status}`)
+        .set("Authorization", `Bearer ${requester.token}`);
+
+      expect(res.status).to.equal(200);
+      expect(res.body.pagination.total).to.equal(1);
+      expect(res.body.exchanges).to.have.length(1);
+      expect(res.body.exchanges[0].status).to.equal(status);
+    });
+  });
+
+  it("devuelve el historial propio de la contraparte (owner) con el rol correcto", async () => {
+    const res = await request(app)
+      .get("/api/exchanges/history")
+      .set("Authorization", `Bearer ${owner.token}`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.pagination.total).to.equal(4);
+    expect(res.body.exchanges).to.have.length(4);
+
+    const completed = res.body.exchanges.find((exchange) => exchange.status === "completed");
+    expect(completed).to.include({ type: "exchange", role: "owner" });
+    expect(completed.counterpart).to.include({ nombre: "Requester" });
+  });
+
+  it("no muestra en el historial intercambios de otros usuarios", async () => {
+    const otro = await registrarUsuario("otro.history@exchange.test.com", { nombre: "Otro" });
+
+    const res = await request(app)
+      .get("/api/exchanges/history")
+      .set("Authorization", `Bearer ${otro.token}`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.pagination.total).to.equal(0);
+    expect(res.body.exchanges).to.have.length(0);
+  });
+
+  it("permite navegar al detalle del intercambio usando detailUrl", async () => {
+    const historyRes = await request(app)
+      .get("/api/exchanges/history?status=completed")
+      .set("Authorization", `Bearer ${requester.token}`);
+
+    const completed = historyRes.body.exchanges[0];
+
+    const detailRes = await request(app)
+      .get(completed.detailUrl)
+      .set("Authorization", `Bearer ${requester.token}`);
+
+    expect(detailRes.status).to.equal(200);
+    expect(detailRes.body._id).to.equal(completed.id);
+    expect(detailRes.body.status).to.equal("completed");
+  });
 });
