@@ -465,14 +465,14 @@ describe("POST /api/publications — Integración", () => {
     expect(titles).to.include(publicacionBase.title);
   });
 
-  it("C04 — price y location enviados por el FE son ignorados sin romper el request", async () => {
+  it("C04 — price se persiste; location se ignora sin romper el request (vive en User)", async () => {
     const res = await request(app)
       .post("/api/publications")
       .set("Authorization", `Bearer ${token}`)
       .send({ ...publicacionBase, price: 500000, location: "Tucumán" });
 
     expect(res.status).to.equal(201);
-    expect(res.body).to.not.have.property("price");
+    expect(res.body).to.have.property("price", 500000);
     expect(res.body).to.not.have.property("location");
   });
 

@@ -10,7 +10,7 @@ const findById = (id) =>
 // status excluido; siempre es 'available' en el listado público, no aporta información variable.
 const findAll = (query, { skip, limit }) =>
   Publication.find(query)
-    .select("title photos type category condition price location status owner createdAt")
+    .select("title photos type category condition price status owner createdAt")
     .populate("owner", "nombre apellido location")
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -22,12 +22,12 @@ const countAll = (query) => Publication.countDocuments(query);
 // Incluye publicaciones unavailable; el owner las necesita para poder reactivarlas desde su panel.
 const findByOwner = (ownerId) =>
   Publication.find({ owner: ownerId })
-    .select("title photos type price location status createdAt")
+    .select("title photos type price status createdAt")
     .sort({ createdAt: -1 });
 
 const findPublicAvailableByOwner = (ownerId, limit = 10) =>
   Publication.find({ owner: ownerId, status: "available" })
-    .select("title photos type category condition price location status createdAt")
+    .select("title photos type category condition price status createdAt")
     .sort({ createdAt: -1 })
     .limit(limit);
 
@@ -37,7 +37,7 @@ const findRecommendedByCategories = (ownerId, categories, limit) =>
     status: "available",
     category: { $in: categories },
   })
-    .select("title photos type category condition price location status owner createdAt")
+    .select("title photos type category condition price status owner createdAt")
     .populate("owner", "nombre apellido location")
     .sort({ createdAt: -1 })
     .limit(limit);

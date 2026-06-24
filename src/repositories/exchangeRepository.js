@@ -4,16 +4,16 @@ const create = (data) => Exchange.create(data);
 
 const findById = (id) =>
   Exchange.findById(id)
-    .populate("offeredPublication", "title photos category condition status price location")
-    .populate("requestedPublication", "title photos owner category type status price location")
+    .populate("offeredPublication", "title photos category condition status price")
+    .populate("requestedPublication", "title photos owner category type status price")
     .populate("requester", "nombre apellido photo")
     .populate("owner", "nombre apellido photo")
     .select("+type");
 
 const findByIdWithDetails = (id) =>
   Exchange.findById(id)
-    .populate("offeredPublication", "title photos category condition status price location")
-    .populate("requestedPublication", "title photos category condition status price location")
+    .populate("offeredPublication", "title photos category condition status price")
+    .populate("requestedPublication", "title photos category condition status price")
     .populate("requester", "nombre apellido photo")
     .populate("owner", "nombre apellido photo");
 
@@ -22,6 +22,16 @@ const findActiveByRequesterAndPublication = (requesterId, requestedPublicationId
     requester: requesterId,
     requestedPublication: requestedPublicationId,
     status: { $in: ["pending", "active"] },
+  });
+
+// Usado por la cascada de cancelación cuando una publicación se borra o se suspende
+// (ver exchangeService.cancelarPorPublicacionNoDisponible). Sin populate a propósito:
+// el service solo necesita comparar ObjectIds en crudo para identificar la "otra"
+// publicación de cada exchange, no los datos completos.
+const findActiveOrPendingByPublication = (publicationId) =>
+  Exchange.find({
+    status: { $in: ["pending", "active"] },
+    $or: [{ offeredPublication: publicationId }, { requestedPublication: publicationId }],
   });
 
 const updateStatusById = (id, status) =>
@@ -48,9 +58,9 @@ const rejectPendingByPublications = (publicationIds, excludeId) =>
 
 const findReceivedByOwner = (ownerId, statusFilter, { skip, limit }) =>
   Exchange.find({ owner: ownerId, ...statusFilter })
-    .populate("offeredPublication", "title photos category condition status price location")
+    .populate("offeredPublication", "title photos category condition status price")
     .populate("requester", "nombre apellido photo")
-    .populate("requestedPublication", "title photos category type status price location")
+    .populate("requestedPublication", "title photos category type status price")
     .select("+type")
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -61,8 +71,8 @@ const countReceived = (ownerId, statusFilter) =>
 
 const findSentByRequester = (requesterId, statusFilter, { skip, limit }) =>
   Exchange.find({ requester: requesterId, ...statusFilter })
-    .populate("offeredPublication", "title photos category condition status price location")
-    .populate("requestedPublication", "title photos owner category type status price location")
+    .populate("offeredPublication", "title photos category condition status price")
+    .populate("requestedPublication", "title photos owner category type status price")
     .populate("owner", "nombre apellido photo")
     .select("+type")
     .sort({ createdAt: -1 })
@@ -77,8 +87,8 @@ const findHistoryByUser = (userId, statusFilter, { skip, limit }) =>
     $or: [{ requester: userId }, { owner: userId }],
     ...statusFilter,
   })
-    .populate("offeredPublication", "title photos category condition type status price location")
-    .populate("requestedPublication", "title photos category condition type status price location")
+    .populate("offeredPublication", "title photos category condition type status price")
+    .populate("requestedPublication", "title photos category condition type status price")
     .populate("requester", "nombre apellido photo")
     .populate("owner", "nombre apellido photo")
     .select("+type")
@@ -130,6 +140,7 @@ module.exports = {
   findById,
   findByIdWithDetails,
   findActiveByRequesterAndPublication,
+  findActiveOrPendingByPublication,
   updateStatusById,
   updateById,
   rejectPendingByPublications,

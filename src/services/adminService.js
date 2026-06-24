@@ -1,4 +1,5 @@
 const adminRepository = require("../repositories/adminRepository");
+const exchangeService = require("./exchangeService");
 const { buildPagination } = require("../helpers/buildPagination");
 const AppError = require("../helpers/AppError");
 const enviarEmail = require("../helpers/enviarEmail");
@@ -161,6 +162,14 @@ const cambiarEstadoPublicacion = async (id, status) => {
   const publicacion = await adminRepository.actualizarPublicacionById(id, { status });
   if (!publicacion) throw new AppError("Publicación no encontrada", 404);
 
+  // Si el admin la saca de "available" (ej. la suspende), cualquier solicitud
+  // pending/active que la involucre queda inviable — se cancela en cascada para
+  // que no quede un Exchange apuntando a una publicación bloqueada (ver detalle
+  // del porqué en exchangeService.cancelarPorPublicacionNoDisponible).
+  if (status !== "available") {
+    await exchangeService.cancelarPorPublicacionNoDisponible(id);
+  }
+
   return publicacion;
 };
 
@@ -180,6 +189,14 @@ const eliminarPublicacion = async (id) => {
   } finally {
     session.endSession();
   }
+
+  // Fuera de la transacción: la publicación ya no existe, así que esto no puede
+  // revertirse ni reintentarse sobre ella. Cancela en cascada cualquier solicitud
+  // pending/active que la tuviera como offered/requestedPublication — antes de este
+  // fix, esas solicitudes quedaban con una referencia rota que rompía con 500 a
+  // accept/confirm/cancel (y de paso impedía que el intercambio llegara a "completed"
+  // para poder calificarlo).
+  await exchangeService.cancelarPorPublicacionNoDisponible(id);
 };
 
 const resolverReporte = async (id, action) => {
@@ -208,6 +225,12 @@ const resolverReporte = async (id, action) => {
     } finally {
       session.endSession();
     }
+
+    // Misma cascada que en eliminarPublicacion: una publicación suspendida no puede
+    // seguir en una solicitud pending/active. La publicación en sí queda "suspended"
+    // (eso no se toca acá, es la decisión de moderación); solo se libera la OTRA
+    // publicación de cada exchange afectado y se cancela la solicitud.
+    await exchangeService.cancelarPorPublicacionNoDisponible(reporte.publicationId);
 
     const publicacion = await adminRepository.findPublicacionConOwner(reporte.publicationId);
     if (publicacion?.owner?.email) {
