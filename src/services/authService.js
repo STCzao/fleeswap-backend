@@ -23,6 +23,21 @@ const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 // Determina si el periodo de gracia de una cuenta eliminada ya expiro.
 const graciaExpirada = (deletedAt) => Date.now() - deletedAt.getTime() > GRACIA_SOFT_DELETE_MS;
 
+// El refresh token (JWT) ya tiene su propia firma e integridad, por lo que no necesita
+// el salt/cost de bcrypt — alcanza con un hash determinístico para que un leak de DB no
+// lo expone en claro. Importante: bcrypt trunca su input a 72 bytes, y todos los refresh
+// tokens de un mismo usuario comparten el mismo id en ese prefijo, lo que hacía que
+// bcrypt.compare diera "match" entre tokens distintos del mismo usuario (rotation/revocación
+// nunca invalidaban el token anterior). SHA-256 + comparación en tiempo constante lo evita.
+const hashRefreshToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
+
+const refreshTokenCoincide = (refreshToken, hashAlmacenado) => {
+  const hashRecibido = Buffer.from(hashRefreshToken(refreshToken));
+  const hashGuardado = Buffer.from(hashAlmacenado);
+  if (hashRecibido.length !== hashGuardado.length) return false;
+  return crypto.timingSafeEqual(hashRecibido, hashGuardado);
+};
+
 const generarVerificationToken = () => {
   const verificationTokenPlano = crypto.randomBytes(32).toString("hex");
   const verificationTokenHash = crypto
@@ -108,7 +123,7 @@ const register = async ({ nombre, apellido, fechaNacimiento, email, password }) 
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
-  const hashedRefresh = await bcrypt.hash(refreshToken, 10);
+  const hashedRefresh = hashRefreshToken(refreshToken);
   const refreshTokenExpiry = new Date(Date.now() + Number(process.env.JWT_REFRESH_EXPIRES_IN_MS));
 
   await userRepository.actualizarRefreshToken(user._id, hashedRefresh, refreshTokenExpiry);
@@ -129,7 +144,7 @@ const register = async ({ nombre, apellido, fechaNacimiento, email, password }) 
 
 // Autentica un usuario existente y emite tokens de acceso y refresco.
 // Mitiga timing attacks comparando con bcrypt incluso cuando el usuario no existe.
-// El refresh token se hashea con bcrypt antes de persistir; nunca se almacena en crudo.
+// El refresh token se hashea (SHA-256) antes de persistir; nunca se almacena en crudo.
 // Si el usuario está soft-deleted y dentro del periodo de gracia (30 días), lo reactiva.
 // Si el periodo de gracia expiro, la cuenta se considera eliminada definitivamente.
 const login = async ({ email, password }) => {
@@ -164,7 +179,7 @@ const login = async ({ email, password }) => {
   const refreshToken = generateRefreshToken(user);
 
   // El refresh token se almacena hasheado para que un leak de DB no permita reutilizarlos.
-  const hashedRefresh = await bcrypt.hash(refreshToken, 10);
+  const hashedRefresh = hashRefreshToken(refreshToken);
   const refreshTokenExpiry = new Date(Date.now() + Number(process.env.JWT_REFRESH_EXPIRES_IN_MS));
 
   await userRepository.actualizarRefreshToken(user._id, hashedRefresh, refreshTokenExpiry);
@@ -209,13 +224,13 @@ const refresh = async (refreshToken) => {
   }
 
   // Verifica que el token recibido coincide con el hash almacenado en DB.
-  const tokenValido = await bcrypt.compare(refreshToken, user.refreshToken);
+  const tokenValido = refreshTokenCoincide(refreshToken, user.refreshToken);
   if (!tokenValido) throw new AppError("Sesión inválida", 401);
 
   // Rotation: genera un nuevo par y reemplaza el refresh token en DB.
   const newAccessToken = generateAccessToken(user);
   const newRefreshToken = generateRefreshToken(user);
-  const hashedRefresh = await bcrypt.hash(newRefreshToken, 10);
+  const hashedRefresh = hashRefreshToken(newRefreshToken);
   const refreshTokenExpiry = new Date(Date.now() + Number(process.env.JWT_REFRESH_EXPIRES_IN_MS));
 
   await userRepository.actualizarRefreshToken(user._id, hashedRefresh, refreshTokenExpiry);

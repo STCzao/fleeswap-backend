@@ -644,8 +644,7 @@ describe("E: DELETE /api/publications/:id — Eliminar publicación", () => {
   });
 
   // ── E03: No-owner no puede eliminar (403) ──────────────────────────────
-  // BUG CONOCIDO: actualmente devuelve 404 en vez de 403 (igual que D02)
-  it("E03 — no-owner recibe 403 al intentar eliminar [BUG: devuelve 404]", async () => {
+  it("E03 — no-owner recibe 403 al intentar eliminar", async () => {
     const res = await request(app)
       .delete(`/api/publications/${publicacionId}`)
       .set("Authorization", `Bearer ${otroToken}`)

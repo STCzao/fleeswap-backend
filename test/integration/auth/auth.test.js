@@ -296,4 +296,207 @@ describe("Auth API", function () {
       expect(res.body).to.have.property("message", "Token expirado");
     });
   });
+
+  describe("POST /api/auth/refresh", () => {
+    const registrarUsuario = async (email) => {
+      const res = await request(app)
+        .post("/api/auth/register")
+        .send({
+          nombre: "Refresh",
+          apellido: "User",
+          fechaNacimiento: "2000-01-01",
+          email,
+          password: "Password123!",
+          confirmPassword: "Password123!",
+        });
+
+      const refreshCookie = res.headers["set-cookie"].find((c) => c.startsWith("refreshToken="));
+      return { accessToken: res.body.accessToken, refreshCookie };
+    };
+
+    it("refresh válido -> 200 + nuevo accessToken + rota la cookie", async () => {
+      const { accessToken, refreshCookie } = await registrarUsuario("refresh@test.com");
+
+      // El JWT se firma con granularidad de segundo (iat) y sin jti: si se generara
+      // en el mismo segundo que el original, el token "nuevo" sería bit-idéntico.
+      // Se espera >1s para que la comparación de rotación sea determinista.
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
+      const res = await request(app)
+        .post("/api/auth/refresh")
+        .set("Cookie", refreshCookie);
+
+      expect(res.status).to.equal(200);
+      expect(res.body).to.have.property("accessToken");
+      expect(res.body.accessToken).to.not.equal(accessToken);
+
+      const nuevaCookie = res.headers["set-cookie"].find((c) => c.startsWith("refreshToken="));
+      expect(nuevaCookie).to.exist;
+      expect(nuevaCookie.split(";")[0]).to.not.equal(refreshCookie.split(";")[0]);
+    });
+
+    it("sin cookie -> 401", async () => {
+      const res = await request(app).post("/api/auth/refresh");
+
+      expect(res.status).to.equal(401);
+      expect(res.body).to.have.property("message", "Refresh token no proporcionado");
+    });
+
+    it("refresh token ya rotado (reutilizado) -> 401", async () => {
+      const { refreshCookie } = await registrarUsuario("refresh-rotado@test.com");
+
+      // Esperar >1s: ver comentario del test anterior sobre granularidad de iat.
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
+      // Primer refresh: rota el token y deja el viejo invalidado en DB.
+      await request(app).post("/api/auth/refresh").set("Cookie", refreshCookie);
+
+      // Reintentar con la cookie vieja debe fallar.
+      const res = await request(app)
+        .post("/api/auth/refresh")
+        .set("Cookie", refreshCookie);
+
+      expect(res.status).to.equal(401);
+    });
+
+    it("token con firma inválida -> 401", async () => {
+      const tokenFalso = jwt.sign({ id: "000000000000000000000001" }, "secret-incorrecto");
+
+      const res = await request(app)
+        .post("/api/auth/refresh")
+        .set("Cookie", `refreshToken=${tokenFalso}`);
+
+      expect(res.status).to.equal(401);
+      expect(res.body).to.have.property("message", "Refresh token inválido");
+    });
+  });
+
+  describe("POST /api/auth/logout", () => {
+    it("logout con sesión activa -> 200 + limpia la cookie + revoca el refresh token en DB", async () => {
+      const registerRes = await request(app)
+        .post("/api/auth/register")
+        .send({
+          nombre: "Logout",
+          apellido: "User",
+          fechaNacimiento: "2000-01-01",
+          email: "logout@test.com",
+          password: "Password123!",
+          confirmPassword: "Password123!",
+        });
+
+      const refreshCookie = registerRes.headers["set-cookie"].find((c) => c.startsWith("refreshToken="));
+
+      const res = await request(app)
+        .post("/api/auth/logout")
+        .set("Cookie", refreshCookie);
+
+      expect(res.status).to.equal(200);
+      expect(res.headers["set-cookie"].some((c) => c.startsWith("refreshToken=;"))).to.equal(true);
+
+      // El refresh token revocado ya no debe poder usarse.
+      const refreshRes = await request(app)
+        .post("/api/auth/refresh")
+        .set("Cookie", refreshCookie);
+      expect(refreshRes.status).to.equal(401);
+    });
+
+    it("logout sin cookie -> 200 (la sesión ya estaba cerrada, no es un error)", async () => {
+      const res = await request(app).post("/api/auth/logout");
+
+      expect(res.status).to.equal(200);
+    });
+  });
+
+  describe("POST /api/auth/forgot-password", () => {
+    it("email existente -> 200 + envía el email de recuperación con token", async () => {
+      await request(app)
+        .post("/api/auth/register")
+        .send({
+          nombre: "Forgot",
+          apellido: "User",
+          fechaNacimiento: "2000-01-01",
+          email: "forgot@test.com",
+          password: "Password123!",
+          confirmPassword: "Password123!",
+        });
+
+      sentEmails = [];
+
+      const res = await request(app)
+        .post("/api/auth/forgot-password")
+        .send({ email: "forgot@test.com" });
+
+      expect(res.status).to.equal(200);
+      expect(sentEmails).to.have.length(1);
+      expect(extractTokenFromHtml(sentEmails[0].html, "/reset-password")).to.be.a("string");
+    });
+
+    it("email inexistente -> 200 + mismo mensaje (no revela si el email existe)", async () => {
+      const res = await request(app)
+        .post("/api/auth/forgot-password")
+        .send({ email: "noexiste-forgot@test.com" });
+
+      expect(res.status).to.equal(200);
+      expect(sentEmails).to.have.length(0);
+    });
+
+    it("email con formato inválido -> 400", async () => {
+      const res = await request(app)
+        .post("/api/auth/forgot-password")
+        .send({ email: "no-es-un-email" });
+
+      expect(res.status).to.equal(400);
+    });
+  });
+
+  describe("POST /api/auth/reset-password", () => {
+    it("token válido -> 200 + permite loguear con la nueva contraseña", async () => {
+      await request(app)
+        .post("/api/auth/register")
+        .send({
+          nombre: "Reset",
+          apellido: "User",
+          fechaNacimiento: "2000-01-01",
+          email: "reset@test.com",
+          password: "Password123!",
+          confirmPassword: "Password123!",
+        });
+
+      sentEmails = [];
+      await request(app).post("/api/auth/forgot-password").send({ email: "reset@test.com" });
+      const token = extractTokenFromHtml(sentEmails[0].html, "/reset-password");
+
+      const res = await request(app)
+        .post("/api/auth/reset-password")
+        .send({ token, password: "NuevaPass123!", confirmPassword: "NuevaPass123!" });
+
+      expect(res.status).to.equal(200);
+
+      const loginRes = await request(app)
+        .post("/api/auth/login")
+        .send({ email: "reset@test.com", password: "NuevaPass123!" });
+      expect(loginRes.status).to.equal(200);
+
+      const loginViejaRes = await request(app)
+        .post("/api/auth/login")
+        .send({ email: "reset@test.com", password: "Password123!" });
+      expect(loginViejaRes.status).to.equal(401);
+    });
+
+    it("token inexistente -> 400", async () => {
+      const res = await request(app)
+        .post("/api/auth/reset-password")
+        .send({ token: "f".repeat(64), password: "NuevaPass123!", confirmPassword: "NuevaPass123!" });
+
+      expect(res.status).to.equal(400);
+    });
+
+    it("contraseñas que no coinciden -> 400 del validador", async () => {
+      const res = await request(app)
+        .post("/api/auth/reset-password")
+        .send({ token: "f".repeat(64), password: "NuevaPass123!", confirmPassword: "Distinta123!" });
+
+      expect(res.status).to.equal(400);
+    });
+  });
 });

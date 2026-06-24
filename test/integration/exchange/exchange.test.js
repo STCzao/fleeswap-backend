@@ -666,6 +666,140 @@ describe("GET /api/exchanges/received — Listado de solicitudes recibidas", () 
 
 });
 
+describe("GET /api/exchanges/sent — Listado de solicitudes enviadas", () => {
+
+  it("sin solicitudes enviadas → 200 con array vacío", async () => {
+    const requester = await registrarUsuario({
+      nombre: "Emilia",
+      apellido: "Test",
+      fechaNacimiento: "2000-01-01",
+      email: "emilia@exchange.test.com",
+      password: "Password123!",
+      confirmPassword: "Password123!",
+    });
+
+    const res = await request(app)
+      .get("/api/exchanges/sent")
+      .set("Authorization", `Bearer ${requester.token}`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body).to.have.property("exchanges").that.is.an("array").that.is.empty;
+    expect(res.body).to.have.property("pagination");
+    expect(res.body.pagination).to.have.property("total", 0);
+  });
+
+  it("sin token → 401", async () => {
+    const res = await request(app).get("/api/exchanges/sent");
+
+    expect(res.status).to.equal(401);
+    expect(res.body).to.have.property("message");
+  });
+
+  it("con solicitudes enviadas → 200 + aparece solo del lado del requester, no en received del mismo usuario", async () => {
+    const requester = await registrarUsuario({
+      nombre: "Franco",
+      apellido: "Test",
+      fechaNacimiento: "2000-01-01",
+      email: "franco@exchange.test.com",
+      password: "Password123!",
+      confirmPassword: "Password123!",
+    });
+
+    const owner = await registrarUsuario({
+      nombre: "Gisela",
+      apellido: "Test",
+      fechaNacimiento: "2000-01-01",
+      email: "gisela@exchange.test.com",
+      password: "Password123!",
+      confirmPassword: "Password123!",
+    });
+
+    const pubFranco = await Publication.create({
+      ...crearPublicacion({ title: "Publicación de Franco" }),
+      owner: requester.userId,
+    });
+
+    const pubGisela = await Publication.create({
+      ...crearPublicacion({ title: "Publicación de Gisela" }),
+      owner: owner.userId,
+    });
+
+    await request(app)
+      .post("/api/exchanges")
+      .set("Authorization", `Bearer ${requester.token}`)
+      .send({
+        offeredPublicationId: pubFranco._id.toString(),
+        requestedPublicationId: pubGisela._id.toString(),
+      });
+
+    const sentRes = await request(app)
+      .get("/api/exchanges/sent")
+      .set("Authorization", `Bearer ${requester.token}`);
+
+    expect(sentRes.status).to.equal(200);
+    expect(sentRes.body.exchanges).to.have.lengthOf(1);
+    expect(sentRes.body.exchanges[0]).to.have.property("requestedPublication");
+
+    // El requester no debe ver su propia solicitud en su listado de "recibidas".
+    const receivedDelRequesterRes = await request(app)
+      .get("/api/exchanges/received")
+      .set("Authorization", `Bearer ${requester.token}`);
+
+    expect(receivedDelRequesterRes.body.exchanges).to.have.lengthOf(0);
+  });
+
+  it("filtro status=pending devuelve solo las solicitudes pendientes enviadas", async () => {
+    const requester = await registrarUsuario({
+      nombre: "Hugo",
+      apellido: "Test",
+      fechaNacimiento: "2000-01-01",
+      email: "hugo@exchange.test.com",
+      password: "Password123!",
+      confirmPassword: "Password123!",
+    });
+
+    const owner = await registrarUsuario({
+      nombre: "Irene",
+      apellido: "Test",
+      fechaNacimiento: "2000-01-01",
+      email: "irene@exchange.test.com",
+      password: "Password123!",
+      confirmPassword: "Password123!",
+    });
+
+    const pubHugo = await Publication.create({
+      ...crearPublicacion({ title: "Publicación de Hugo" }),
+      owner: requester.userId,
+    });
+
+    const pubIrene = await Publication.create({
+      ...crearPublicacion({ title: "Publicación de Irene" }),
+      owner: owner.userId,
+    });
+
+    const envio = await request(app)
+      .post("/api/exchanges")
+      .set("Authorization", `Bearer ${requester.token}`)
+      .send({
+        offeredPublicationId: pubHugo._id.toString(),
+        requestedPublicationId: pubIrene._id.toString(),
+      });
+
+    await request(app)
+      .patch(`/api/exchanges/${envio.body._id}/reject`)
+      .set("Authorization", `Bearer ${owner.token}`);
+
+    const res = await request(app)
+      .get("/api/exchanges/sent?status=pending")
+      .set("Authorization", `Bearer ${requester.token}`);
+
+    expect(res.status).to.equal(200);
+    expect(res.body.exchanges).to.have.lengthOf(0);
+    expect(res.body.pagination).to.have.property("total", 0);
+  });
+
+});
+
 describe("GET /api/exchanges/received — Estados visibles", () => {
 
   it("2a | exchange pendiente tiene todos los campos requeridos", async () => {
