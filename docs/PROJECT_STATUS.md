@@ -1,6 +1,6 @@
 # Estado Tecnico del Proyecto
 
-Fecha de referencia: 5 de junio de 2026.
+Fecha de referencia: 25 de julio de 2026.
 
 ## Objetivo de Este Documento
 
@@ -284,6 +284,19 @@ Impacto documental:
 - estas historias no reemplazan el alcance original de reputación, sino que consolidan dos fallas detectadas en otras épicas;
 - el cierre backend ya no debe medirse solo por reputación/historial, sino también por robustez de chat y coherencia del flujo de moderación;
 - la próxima actualización de estado deberá distinguir con claridad entre cobertura funcional existente y endurecimientos pendientes sobre volumen de mensajes y bloqueo operativo por revisión.
+
+## Ajustes Recientes en Publicaciones
+
+En curso (aún sin commitear al momento de esta actualización): se está endureciendo la regla de `price` en publicaciones.
+
+- `price` pasa a ser requerido y validado (`> 0`) al crear una publicación cuando el `type` implica venta;
+- para `type: "trueque"`, el `price` ya no se acepta como dato relevante: el service lo fuerza a `0` tanto en creación como en edición, incluso si el cliente lo envía o si una publicación cambia de tipo hacia trueque;
+- el validator de edición valida formato (`> 0`) pero delega la consistencia final con el `type` vigente al service, que ya tiene la publicación cargada desde la base.
+
+Impacto documental:
+
+- esta regla no está asociada a ninguna HU nueva del backlog; es un endurecimiento de consistencia de datos sobre Épica 2 (publicaciones);
+- conviene confirmarla contra el contrato de frontend antes de darla por cerrada, dado que cambia el comportamiento esperado al enviar `price` en un trueque.
 
 ## Conclusion
 

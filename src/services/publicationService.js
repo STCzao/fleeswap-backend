@@ -12,6 +12,12 @@ const AppError = require("../helpers/AppError");
 const REPORTED_STATUS = "suspended";
 // Estado usado para bloquear una publicación apenas recibe un reporte pendiente.
 
+// El precio no aplica a un trueque puro: aunque el validator no lo exige en ese caso,
+// tampoco lo prohíbe explícitamente, así que se fuerza a 0 acá para que nunca quede un
+// trueque con un price "fantasma" si algún cliente lo manda igual.
+const TIPO_SIN_PRECIO = "trueque";
+const resolverPrice = (type, price) => (type === TIPO_SIN_PRECIO ? 0 : price);
+
 const crear = async (
   ownerId,
   // location no se acepta acá a propósito: vive en User.location, no se duplica por publicación.
@@ -24,7 +30,7 @@ const crear = async (
     category,
     condition,
     type,
-    price,
+    price: resolverPrice(type, price),
     photos,
     owner: ownerId,
   });
@@ -57,7 +63,14 @@ const editar = async (publicationId, ownerId, fields) => {
   if (fields.category !== undefined) data.category = fields.category;
   if (fields.condition !== undefined) data.condition = fields.condition;
   if (fields.type !== undefined) data.type = fields.type;
-  if (fields.price !== undefined) data.price = fields.price;
+  // El type vigente tras este edit es el nuevo si vino en la request, o el que ya tenía.
+  const tipoFinal = fields.type !== undefined ? fields.type : publication.type;
+  if (fields.price !== undefined) {
+    data.price = resolverPrice(tipoFinal, fields.price);
+  } else if (fields.type !== undefined && tipoFinal === TIPO_SIN_PRECIO && publication.price !== 0) {
+    // Cambia a trueque sin tocar price explícitamente: limpiar el precio que tenía antes.
+    data.price = 0;
+  }
   if (fields.photos !== undefined) data.photos = fields.photos;
 
   if (Object.keys(data).length === 0) throw new AppError("Solicitud inválida", 400);
