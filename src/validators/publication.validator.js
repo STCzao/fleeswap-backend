@@ -46,11 +46,22 @@ const crearValidator = [
   body("category").isIn(CATEGORIAS).withMessage("Categoría inválida"),
   body("condition").isIn(CONDICIONES).withMessage("Estado del objeto inválido"),
   body("type").isIn(TIPOS).withMessage("Tipo de publicación inválido"),
+  // price solo tiene sentido si hay venta involucrada; en un trueque puro no se pide
+  // (el service la fuerza a 0 igual, por si algún cliente la manda de todas formas).
+  body("price")
+    .if(body("type").not().equals("trueque"))
+    .exists({ checkFalsy: true })
+    .withMessage("El precio es requerido para publicaciones de venta o ambos")
+    .bail()
+    .isFloat({ gt: 0 })
+    .withMessage("El precio debe ser un número mayor a 0")
+    .toFloat(),
   body("photos")
     .isArray({ min: 1, max: 5 })
     .withMessage("Debe incluir entre 1 y 5 fotos"),
   body("photos.*").isURL().withMessage("Cada foto debe ser una URL válida"),
 ];
+
 
 const editarValidator = [
   body("title")
@@ -86,6 +97,14 @@ const editarValidator = [
     .optional()
     .isIn(TIPOS)
     .withMessage("Tipo de publicación inválido"),
+  // Formato solamente: la consistencia con el type final (existente o el que se está
+  // editando en la misma request) la resuelve publicationService.editar, que ya tiene
+  // la publicación cargada de la DB y conoce su type vigente.
+  body("price")
+    .optional()
+    .isFloat({ gt: 0 })
+    .withMessage("El precio debe ser un número mayor a 0")
+    .toFloat(),
   body("photos")
     .optional()
     .isArray({ min: 1, max: 5 })

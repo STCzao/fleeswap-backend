@@ -28,6 +28,9 @@ const publicacionBase = {
   category: "electronica",
   condition: "como_nuevo",
   type: "venta",
+  // type:"venta" exige price > 0 (ver publication.validator.js); en los overrides a
+  // "trueque" este valor se ignora y el service lo fuerza a 0 igual.
+  price: 250000,
   photos: fotosMock,
 };
 
